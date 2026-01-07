@@ -29,7 +29,10 @@ if 'session_id' not in st.session_state:
 if 'conversation_history' not in st.session_state:
     st.session_state.conversation_history = []
 
-# McKinsey-style Professional CSS
+if 'prefilled_query' not in st.session_state:
+    st.session_state.prefilled_query = ""
+
+# McKinsey-style Professional CSS with Landing Page Enhancements
 st.markdown("""
 <style>
     /* Import Google Fonts */
@@ -54,6 +57,218 @@ st.markdown("""
         --success: #0d7377;
         --border: #e0e0e0;
     }
+
+    /* ===== LANDING PAGE STYLES ===== */
+
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, #003366 0%, #0a4d8c 50%, #0097a7 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        letter-spacing: -1px;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 1rem;
+        font-weight: 400;
+    }
+
+    .hero-description {
+        font-size: 1rem;
+        opacity: 0.8;
+        max-width: 700px;
+        margin: 0 auto 1.5rem auto;
+        line-height: 1.6;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: rgba(255,255,255,0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+
+    /* Agent Cards for Landing */
+    .agent-card-landing {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        height: 100%;
+        transition: all 0.3s ease;
+        cursor: default;
+    }
+
+    .agent-card-landing:hover {
+        box-shadow: 0 8px 25px rgba(0,51,102,0.15);
+        transform: translateY(-2px);
+        border-color: #0097a7;
+    }
+
+    .agent-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .agent-card-landing h4 {
+        color: #003366;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .agent-card-landing p {
+        color: #5f6368;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 0.75rem;
+    }
+
+    .agent-card-landing ul {
+        margin: 0;
+        padding-left: 1.2rem;
+        color: #5f6368;
+        font-size: 0.8rem;
+    }
+
+    .agent-card-landing li {
+        margin-bottom: 0.25rem;
+    }
+
+    /* How It Works Section */
+    .how-it-works {
+        background: #f5f7fa;
+        padding: 2rem;
+        border-radius: 12px;
+        margin: 2rem 0;
+    }
+
+    .step-card {
+        text-align: center;
+        padding: 1.5rem 1rem;
+    }
+
+    .step-number {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #003366 0%, #0097a7 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 auto 1rem auto;
+    }
+
+    .step-title {
+        color: #003366;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .step-desc {
+        color: #5f6368;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+
+    /* Example Query Cards */
+    .example-query-card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-left: 4px solid #0097a7;
+        border-radius: 0 8px 8px 0;
+        padding: 1rem 1.25rem;
+        margin: 0.5rem 0;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .example-query-card:hover {
+        background: #f5f7fa;
+        border-left-color: #003366;
+        box-shadow: 0 2px 8px rgba(0,51,102,0.1);
+    }
+
+    .example-query-card p {
+        margin: 0;
+        color: #1a1a2e;
+        font-size: 0.9rem;
+    }
+
+    .example-query-card span {
+        color: #0097a7;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Stats Cards */
+    .stat-card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+        box-shadow: 0 4px 12px rgba(0,51,102,0.1);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #003366;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #5f6368;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.5rem;
+    }
+
+    .stat-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Section Headers */
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #003366;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .section-subtitle {
+        font-size: 1rem;
+        color: #5f6368;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    /* ===== EXISTING STYLES ===== */
 
     /* Main Header */
     .main-header {
@@ -336,6 +551,61 @@ def format_bytes(size):
         size /= 1024
     return f"{size:.1f} TB"
 
+# Agent data for landing page
+AGENT_INFO = {
+    "charter_expert": {
+        "icon": "📜",
+        "name": "Charter Expert",
+        "title": "Audit Committee Charter",
+        "desc": "Ahli penyusunan Audit Committee Charter dan Internal Audit Charter",
+        "expertise": ["Struktur Charter", "Best Practices Governance", "Hubungan dengan Board"]
+    },
+    "planning_expert": {
+        "icon": "📋",
+        "name": "Planning Expert",
+        "title": "Audit Planning & Execution",
+        "desc": "Ahli perencanaan dan pelaksanaan audit",
+        "expertise": ["Risk Assessment", "Audit Program", "Review Kinerja Audit"]
+    },
+    "financial_review_expert": {
+        "icon": "💰",
+        "name": "Financial Review Expert",
+        "title": "Financial Reporting Review",
+        "desc": "Ahli review laporan keuangan dan efektivitas akuntan publik",
+        "expertise": ["Review Laporan Keuangan", "Penunjukan Auditor", "Quality Control"]
+    },
+    "regulatory_expert": {
+        "icon": "⚖️",
+        "name": "Regulatory Expert",
+        "title": "Regulatory Compliance",
+        "desc": "Ahli peraturan dan standar terkait Komite Audit",
+        "expertise": ["UU Pasar Modal", "PSAK & SPAP", "Regulasi OJK"]
+    },
+    "banking_expert": {
+        "icon": "🏦",
+        "name": "Banking Expert",
+        "title": "Banking Audit Committee",
+        "desc": "Ahli khusus Komite Audit di sektor perbankan",
+        "expertise": ["Peraturan BI/OJK", "Risk Management", "Compliance Banking"]
+    },
+    "reporting_expert": {
+        "icon": "📊",
+        "name": "Reporting Expert",
+        "title": "Reporting & Disclosure",
+        "desc": "Ahli pelaporan dan pengungkapan kegiatan Komite Audit",
+        "expertise": ["Laporan Periodik", "Annual Report Disclosure", "Stakeholder Communication"]
+    }
+}
+
+EXAMPLE_QUERIES = [
+    {"query": "Apa saja tugas dan tanggung jawab utama Komite Audit?", "agent": "Charter Expert"},
+    {"query": "Bagaimana proses penunjukan auditor eksternal yang sesuai regulasi?", "agent": "Financial Review Expert"},
+    {"query": "Apa saja peraturan OJK yang mengatur tentang Komite Audit?", "agent": "Regulatory Expert"},
+    {"query": "Bagaimana peran Komite Audit dalam risk assessment?", "agent": "Planning Expert"},
+    {"query": "Apa perbedaan Komite Audit di perbankan dengan sektor lain?", "agent": "Banking Expert"},
+    {"query": "Bagaimana format disclosure Komite Audit dalam annual report?", "agent": "Reporting Expert"},
+]
+
 # Sidebar
 with st.sidebar:
     # Logo and Title
@@ -354,8 +624,8 @@ with st.sidebar:
     # Navigation Menu
     selected = option_menu(
         menu_title=None,
-        options=["Konsultasi", "Dokumen", "Analitik", "Tentang"],
-        icons=["chat-left-text", "folder2-open", "graph-up-arrow", "info-circle"],
+        options=["Beranda", "Konsultasi", "Dokumen", "Analitik", "Tentang"],
+        icons=["house-door", "chat-left-text", "folder2-open", "graph-up-arrow", "info-circle"],
         menu_icon="cast",
         default_index=0,
         styles={
@@ -380,17 +650,18 @@ with st.sidebar:
 
     st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
 
-    # Settings Section
-    st.markdown("""
-    <div style="padding: 0 0.5rem;">
-        <p style="color: rgba(255,255,255,0.4); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.75rem;">Pengaturan</p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Settings Section (only show for relevant pages)
+    if selected in ["Konsultasi", "Beranda"]:
+        st.markdown("""
+        <div style="padding: 0 0.5rem;">
+            <p style="color: rgba(255,255,255,0.4); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.75rem;">Pengaturan</p>
+        </div>
+        """, unsafe_allow_html=True)
 
-    use_context = st.checkbox("Gunakan Konteks Dokumen", value=True, help="Aktifkan untuk mencari referensi dari dokumen yang sudah diupload")
-    max_agents = st.slider("Jumlah Agen Maksimal", 1, 3, 2, help="Jumlah agen expert yang akan menjawab pertanyaan")
+        use_context = st.checkbox("Gunakan Konteks Dokumen", value=True, help="Aktifkan untuk mencari referensi dari dokumen yang sudah diupload")
+        max_agents = st.slider("Jumlah Agen Maksimal", 1, 3, 2, help="Jumlah agen expert yang akan menjawab pertanyaan")
 
-    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
 
     # Session Section
     st.markdown("""
@@ -411,6 +682,7 @@ with st.sidebar:
     if st.button("Mulai Sesi Baru", use_container_width=True, type="secondary"):
         st.session_state.session_id = str(uuid.uuid4())
         st.session_state.conversation_history = []
+        st.session_state.prefilled_query = ""
         st.rerun()
 
     # Footer
@@ -420,8 +692,150 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-# Main content
-if selected == "Konsultasi":
+# ===== MAIN CONTENT =====
+
+if selected == "Beranda":
+    # Hero Section
+    st.markdown("""
+    <div class="hero-section">
+        <div class="hero-title">Komite Audit Intelligence</div>
+        <div class="hero-subtitle">Sistem AI Multi-Agent untuk Konsultasi Ahli Komite Audit Indonesia</div>
+        <div class="hero-description">
+            Dapatkan jawaban komprehensif dari 6 agen ahli yang terspesialisasi dalam berbagai aspek
+            Komite Audit — mulai dari penyusunan charter, perencanaan audit, review keuangan,
+            kepatuhan regulasi, hingga pelaporan.
+        </div>
+        <div class="hero-badge">✨ Powered by RAG + Multi-Agent AI</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # CTA Button
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        if st.button("🚀 Mulai Konsultasi", type="primary", use_container_width=True):
+            st.session_state.prefilled_query = ""
+            st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Stats Section
+    st.markdown('<div class="section-title">Statistik Sistem</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-subtitle">Real-time metrics dari sistem</div>', unsafe_allow_html=True)
+
+    # Fetch stats
+    doc_stats = call_api("statistics/documents")
+
+    cols = st.columns(4)
+
+    total_docs = 0
+    total_chunks = 0
+    if doc_stats and doc_stats.get("statistics"):
+        import pandas as pd
+        df = pd.DataFrame(doc_stats["statistics"])
+        if not df.empty:
+            total_docs = int(df['total_documents'].sum())
+            total_chunks = int(df['total_chunks'].sum())
+
+    stats_data = [
+        ("📄", str(total_docs), "Total Dokumen"),
+        ("🧩", str(total_chunks), "Total Chunks"),
+        ("🤖", "6", "Expert Agents"),
+        ("⚡", "RAG", "Teknologi"),
+    ]
+
+    for col, (icon, value, label) in zip(cols, stats_data):
+        with col:
+            st.markdown(f"""
+            <div class="stat-card">
+                <div class="stat-icon">{icon}</div>
+                <div class="stat-value">{value}</div>
+                <div class="stat-label">{label}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    # Expert Agents Section
+    st.markdown('<div class="section-title">6 Expert Agents</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-subtitle">Tim AI ahli yang siap menjawab pertanyaan Anda</div>', unsafe_allow_html=True)
+
+    # First row of agents
+    cols = st.columns(3)
+    agents_list = list(AGENT_INFO.values())
+
+    for idx, col in enumerate(cols):
+        agent = agents_list[idx]
+        with col:
+            expertise_html = "".join([f"<li>{exp}</li>" for exp in agent["expertise"]])
+            st.markdown(f"""
+            <div class="agent-card-landing">
+                <div class="agent-icon">{agent['icon']}</div>
+                <h4>{agent['title']}</h4>
+                <p>{agent['desc']}</p>
+                <ul>{expertise_html}</ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Second row of agents
+    cols = st.columns(3)
+    for idx, col in enumerate(cols):
+        agent = agents_list[idx + 3]
+        with col:
+            expertise_html = "".join([f"<li>{exp}</li>" for exp in agent["expertise"]])
+            st.markdown(f"""
+            <div class="agent-card-landing">
+                <div class="agent-icon">{agent['icon']}</div>
+                <h4>{agent['title']}</h4>
+                <p>{agent['desc']}</p>
+                <ul>{expertise_html}</ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
+    # How It Works Section
+    st.markdown("""
+    <div class="how-it-works">
+        <div class="section-title" style="margin-bottom: 0.5rem;">Cara Kerja Sistem</div>
+        <div class="section-subtitle" style="margin-bottom: 1.5rem;">4 langkah sederhana untuk mendapatkan jawaban ahli</div>
+    """, unsafe_allow_html=True)
+
+    cols = st.columns(4)
+    steps = [
+        ("1", "Ajukan Pertanyaan", "Ketik pertanyaan Anda tentang Komite Audit"),
+        ("2", "AI Routing", "Sistem memilih expert agent yang paling relevan"),
+        ("3", "RAG Analysis", "Pencarian konteks dari dokumen & knowledge base"),
+        ("4", "Jawaban Ahli", "Dapatkan respons komprehensif dari expert"),
+    ]
+
+    for col, (num, title, desc) in zip(cols, steps):
+        with col:
+            st.markdown(f"""
+            <div class="step-card">
+                <div class="step-number">{num}</div>
+                <div class="step-title">{title}</div>
+                <div class="step-desc">{desc}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Example Queries Section
+    st.markdown('<div class="section-title">Contoh Pertanyaan</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-subtitle">Klik untuk langsung mencoba</div>', unsafe_allow_html=True)
+
+    cols = st.columns(2)
+    for idx, example in enumerate(EXAMPLE_QUERIES):
+        with cols[idx % 2]:
+            if st.button(f"💬 {example['query']}", key=f"example_{idx}", use_container_width=True):
+                st.session_state.prefilled_query = example['query']
+                st.rerun()
+
+elif selected == "Konsultasi":
     st.markdown('<div class="main-header">Konsultasi Komite Audit</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">Sistem multi-agen cerdas untuk menjawab pertanyaan seputar tata kelola dan praktik Komite Audit</div>', unsafe_allow_html=True)
 
@@ -442,12 +856,20 @@ if selected == "Konsultasi":
     # Query Section
     st.markdown('<div class="section-header">Ajukan Pertanyaan</div>', unsafe_allow_html=True)
 
+    # Use prefilled query if available
+    default_query = st.session_state.prefilled_query if st.session_state.prefilled_query else ""
+
     user_query = st.text_area(
         "Pertanyaan Anda",
+        value=default_query,
         placeholder="Contoh: Bagaimana peran Komite Audit dalam mengawasi efektivitas pengendalian internal perusahaan?",
         height=100,
         label_visibility="collapsed"
     )
+
+    # Clear prefilled query after use
+    if st.session_state.prefilled_query:
+        st.session_state.prefilled_query = ""
 
     col1, col2, col3 = st.columns([1, 1, 4])
     with col1:
@@ -770,7 +1192,7 @@ elif selected == "Tentang":
 
         - **Backend:** FastAPI + Python
         - **Frontend:** Streamlit
-        - **LLM:** Groq API (Llama 3.1 70B)
+        - **LLM:** Groq API (Llama 3.3 70B) + GLM (Zhipu AI)
         - **Vector Store:** Supabase + pgvector
         - **Embeddings:** Sentence Transformers
 
