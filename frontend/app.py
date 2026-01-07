@@ -22,6 +22,9 @@ st.set_page_config(
 # API Configuration
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
+# App Version
+APP_VERSION = "1.0.0"
+
 # Initialize session state
 if 'session_id' not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
@@ -516,6 +519,44 @@ st.markdown("""
         font-weight: 500;
         color: var(--primary-navy);
     }
+
+    /* Footer Styling */
+    .app-footer {
+        background: linear-gradient(135deg, #003366 0%, #0a4d8c 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-top: 3rem;
+        text-align: center;
+    }
+
+    .footer-disclaimer {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 0 auto 1.5rem auto;
+        padding: 1rem;
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+    }
+
+    .footer-developer {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .footer-version {
+        font-size: 0.75rem;
+        opacity: 0.6;
+    }
+
+    .footer-divider {
+        width: 60px;
+        height: 2px;
+        background: rgba(255,255,255,0.3);
+        margin: 1rem auto;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -686,9 +727,9 @@ with st.sidebar:
         st.rerun()
 
     # Footer
-    st.markdown("""
+    st.markdown(f"""
     <div style="position: absolute; bottom: 1rem; left: 0; right: 0; text-align: center;">
-        <p style="color: rgba(255,255,255,0.3); font-size: 0.65rem; margin: 0;">v1.0.0 · HADIANT Platform</p>
+        <p style="color: rgba(255,255,255,0.3); font-size: 0.65rem; margin: 0;">v{APP_VERSION} · MS Hadianto</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -834,6 +875,24 @@ if selected == "Beranda":
             if st.button(f"💬 {example['query']}", key=f"example_{idx}", use_container_width=True):
                 st.session_state.prefilled_query = example['query']
                 st.rerun()
+
+    # Footer Section
+    st.markdown(f"""
+    <div class="app-footer">
+        <div class="footer-disclaimer">
+            <strong>⚠️ Disclaimer:</strong> Sistem ini merupakan alat bantu berbasis AI untuk memberikan informasi umum
+            seputar Komite Audit. Hasil konsultasi bukan merupakan nasihat hukum atau profesional yang mengikat.
+            Pengguna disarankan untuk tetap berkonsultasi dengan ahli profesional untuk keputusan bisnis yang penting.
+        </div>
+        <div class="footer-divider"></div>
+        <div class="footer-developer">
+            Developed by <strong>MS Hadianto</strong> · KIM Consulting · HADIANT Platform
+        </div>
+        <div class="footer-version">
+            Komite Audit Intelligence System v{APP_VERSION} · © 2024
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 elif selected == "Konsultasi":
     st.markdown('<div class="main-header">Konsultasi Komite Audit</div>', unsafe_allow_html=True)
@@ -1221,9 +1280,9 @@ elif selected == "Tentang":
 
     st.markdown("---")
 
-    st.markdown("""
+    st.markdown(f"""
     <div style="text-align: center; padding: 2rem 0; color: #5f6368;">
-        <p style="margin: 0; font-size: 0.85rem;">Komite Audit Intelligence System v1.0.0</p>
-        <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem;">Developed by Sopian · KIM Consulting · HADIANT Platform</p>
+        <p style="margin: 0; font-size: 0.85rem;">Komite Audit Intelligence System v{APP_VERSION}</p>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem;">Developed by MS Hadianto · KIM Consulting · HADIANT Platform</p>
     </div>
     """, unsafe_allow_html=True)
