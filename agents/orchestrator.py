@@ -5,7 +5,7 @@ Implements specialized expert agents for different audit committee topics
 import time
 from typing import List, Dict, Optional, Tuple
 import logging
-from backend.llm_client import llm_client
+from backend.llm_client import llm_client, glm_client
 from backend.embeddings import embedding_manager
 from backend.database import db
 from config.config import settings, AGENT_ROLES, SYSTEM_PROMPTS
@@ -82,19 +82,28 @@ Format Jawaban:
             return f"Error processing query: {str(e)}", execution_time, 0
 
 class QueryRouter:
-    """Routes queries to appropriate expert agents"""
-    
+    """Routes queries to appropriate expert agents using GLM (with Groq fallback)"""
+
     def __init__(self):
         self.system_prompt = SYSTEM_PROMPTS["query_router"]
-        logger.info("Query Router initialized")
-    
+        self.use_glm = glm_client.client is not None
+        logger.info(f"Query Router initialized (using {'GLM' if self.use_glm else 'Groq'} for routing)")
+
     async def route(self, query: str) -> Dict:
-        """Route query to appropriate agent(s)"""
+        """Route query to appropriate agent(s) - uses GLM if available, falls back to Groq"""
         try:
-            routing_decision = await llm_client.route_query(
-                query=query,
-                system_prompt=self.system_prompt
-            )
+            if self.use_glm:
+                # Use GLM for routing (faster and cheaper)
+                routing_decision = await glm_client.route_query(
+                    query=query,
+                    system_prompt=self.system_prompt
+                )
+            else:
+                # Fallback to Groq if GLM not configured
+                routing_decision = await llm_client.route_query(
+                    query=query,
+                    system_prompt=self.system_prompt
+                )
             return routing_decision
         except Exception as e:
             logger.error(f"Error routing query: {str(e)}")
