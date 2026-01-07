@@ -305,21 +305,27 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Helper functions
-def call_api(endpoint: str, method: str = "GET", **kwargs):
-    """Call API endpoint"""
+def call_api(endpoint: str, method: str = "GET", timeout: int = 120, **kwargs):
+    """Call API endpoint with timeout"""
     url = f"{API_BASE_URL}/{endpoint}"
     try:
         if method == "GET":
-            response = requests.get(url, **kwargs)
+            response = requests.get(url, timeout=timeout, **kwargs)
         elif method == "POST":
-            response = requests.post(url, **kwargs)
+            response = requests.post(url, timeout=timeout, **kwargs)
         elif method == "DELETE":
-            response = requests.delete(url, **kwargs)
+            response = requests.delete(url, timeout=timeout, **kwargs)
 
         response.raise_for_status()
         return response.json()
+    except requests.exceptions.Timeout:
+        st.error("Request timeout. Server mungkin sedang sibuk, coba lagi.")
+        return None
+    except requests.exceptions.ConnectionError:
+        st.error("Tidak dapat terhubung ke server. Periksa koneksi.")
+        return None
     except Exception as e:
-        st.error(f"Connection Error: {str(e)}")
+        st.error(f"Error: {str(e)}")
         return None
 
 def format_bytes(size):
@@ -332,55 +338,87 @@ def format_bytes(size):
 
 # Sidebar
 with st.sidebar:
+    # Logo and Title
     st.markdown("""
-    <div style="padding: 1rem 0; text-align: center;">
-        <h2 style="color: white; font-weight: 600; margin: 0;">◆ KA Intelligence</h2>
-        <p style="color: rgba(255,255,255,0.7); font-size: 0.8rem; margin-top: 0.25rem;">Komite Audit Expert System</p>
+    <div style="padding: 1.5rem 1rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0097a7 0%, #00bcd4 100%); border-radius: 12px; margin: 0 auto 0.75rem auto; display: flex; align-items: center; justify-content: center;">
+            <span style="color: white; font-size: 1.5rem; font-weight: 700;">KA</span>
+        </div>
+        <h3 style="color: white; font-weight: 600; margin: 0; font-size: 1.1rem;">Komite Audit</h3>
+        <p style="color: rgba(255,255,255,0.5); font-size: 0.7rem; margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 1px;">Intelligence System</p>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
 
+    # Navigation Menu
     selected = option_menu(
         menu_title=None,
         options=["Konsultasi", "Dokumen", "Analitik", "Tentang"],
-        icons=["chat-square-text", "archive", "bar-chart-line", "info-square"],
+        icons=["chat-left-text", "folder2-open", "graph-up-arrow", "info-circle"],
         menu_icon="cast",
         default_index=0,
         styles={
             "container": {"padding": "0", "background-color": "transparent"},
-            "icon": {"color": "rgba(255,255,255,0.8)", "font-size": "1rem"},
+            "icon": {"color": "#0097a7", "font-size": "1rem"},
             "nav-link": {
-                "font-size": "0.9rem",
+                "font-size": "0.85rem",
                 "text-align": "left",
-                "margin": "0.25rem 0",
-                "padding": "0.75rem 1rem",
-                "color": "rgba(255,255,255,0.8)",
-                "border-radius": "4px",
+                "margin": "0.15rem 0.5rem",
+                "padding": "0.7rem 1rem",
+                "color": "rgba(255,255,255,0.7)",
+                "border-radius": "8px",
+                "transition": "all 0.2s ease",
             },
             "nav-link-selected": {
-                "background-color": "rgba(255,255,255,0.15)",
+                "background-color": "rgba(0,151,167,0.2)",
                 "color": "white",
                 "font-weight": "500",
             },
         }
     )
 
-    st.markdown("---")
+    st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
 
-    st.markdown('<p style="color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 500;">PENGATURAN</p>', unsafe_allow_html=True)
-    use_context = st.checkbox("Gunakan Konteks Dokumen", value=True)
-    max_agents = st.slider("Maksimal Agen", 1, 3, 2)
+    # Settings Section
+    st.markdown("""
+    <div style="padding: 0 0.5rem;">
+        <p style="color: rgba(255,255,255,0.4); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.75rem;">Pengaturan</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown("---")
+    use_context = st.checkbox("Gunakan Konteks Dokumen", value=True, help="Aktifkan untuk mencari referensi dari dokumen yang sudah diupload")
+    max_agents = st.slider("Jumlah Agen Maksimal", 1, 3, 2, help="Jumlah agen expert yang akan menjawab pertanyaan")
 
-    st.markdown('<p style="color: rgba(255,255,255,0.7); font-size: 0.8rem; font-weight: 500;">SESI</p>', unsafe_allow_html=True)
-    st.markdown(f'<p style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">ID: {st.session_state.session_id[:8]}...</p>', unsafe_allow_html=True)
+    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
 
-    if st.button("Sesi Baru", use_container_width=True):
+    # Session Section
+    st.markdown("""
+    <div style="padding: 0 0.5rem;">
+        <p style="color: rgba(255,255,255,0.4); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.5rem;">Sesi Aktif</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 0.75rem; margin: 0 0.5rem;">
+        <p style="color: rgba(255,255,255,0.5); font-size: 0.7rem; margin: 0;">Session ID</p>
+        <p style="color: rgba(255,255,255,0.8); font-size: 0.8rem; margin: 0.25rem 0 0 0; font-family: monospace;">{st.session_state.session_id[:12]}...</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 0.75rem;'></div>", unsafe_allow_html=True)
+
+    if st.button("Mulai Sesi Baru", use_container_width=True, type="secondary"):
         st.session_state.session_id = str(uuid.uuid4())
         st.session_state.conversation_history = []
         st.rerun()
+
+    # Footer
+    st.markdown("""
+    <div style="position: absolute; bottom: 1rem; left: 0; right: 0; text-align: center;">
+        <p style="color: rgba(255,255,255,0.3); font-size: 0.65rem; margin: 0;">v1.0.0 · HADIANT Platform</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Main content
 if selected == "Konsultasi":
