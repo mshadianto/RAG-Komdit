@@ -13,7 +13,7 @@ import os
 
 # Page configuration
 st.set_page_config(
-    page_title="Komite Audit Intelligence",
+    page_title="KAMI - Komite Audit Multi-Intelligence",
     page_icon="◆",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -653,10 +653,10 @@ with st.sidebar:
     st.markdown("""
     <div style="padding: 1.5rem 1rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
         <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0097a7 0%, #00bcd4 100%); border-radius: 12px; margin: 0 auto 0.75rem auto; display: flex; align-items: center; justify-content: center;">
-            <span style="color: white; font-size: 1.5rem; font-weight: 700;">KA</span>
+            <span style="color: white; font-size: 1.2rem; font-weight: 700;">KAMI</span>
         </div>
-        <h3 style="color: white; font-weight: 600; margin: 0; font-size: 1.1rem;">Komite Audit</h3>
-        <p style="color: rgba(255,255,255,0.5); font-size: 0.7rem; margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 1px;">Intelligence System</p>
+        <h3 style="color: white; font-weight: 600; margin: 0; font-size: 1rem;">Komite Audit Multi-Intelligence</h3>
+        <p style="color: rgba(255,255,255,0.5); font-size: 0.6rem; margin-top: 0.25rem; letter-spacing: 0.5px; font-style: italic;">Multi-Agent Expertise for Strategic Oversight</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -739,8 +739,11 @@ if selected == "Beranda":
     # Hero Section
     st.markdown("""
     <div class="hero-section">
-        <div class="hero-title">Komite Audit Intelligence</div>
-        <div class="hero-subtitle">Sistem AI Multi-Agent untuk Konsultasi Ahli Komite Audit Indonesia</div>
+        <div class="hero-title">KAMI</div>
+        <div class="hero-subtitle">Komite Audit Multi-Intelligence</div>
+        <div class="hero-description" style="font-style: italic; font-size: 1.1rem; opacity: 0.95; margin-bottom: 1.5rem;">
+            "Multi-Agent Expertise for Strategic Oversight"
+        </div>
         <div class="hero-description">
             Dapatkan jawaban komprehensif dari 6 agen ahli yang terspesialisasi dalam berbagai aspek
             Komite Audit — mulai dari penyusunan charter, perencanaan audit, review keuangan,
@@ -889,7 +892,7 @@ if selected == "Beranda":
             Developed by <strong>MS Hadianto</strong> · Founder Labbaik AI
         </div>
         <div class="footer-version">
-            Komite Audit Intelligence System v{APP_VERSION} · © 2026
+            KAMI v{APP_VERSION} · © 2026
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1282,7 +1285,7 @@ elif selected == "Tentang":
 
     st.markdown(f"""
     <div style="text-align: center; padding: 2rem 0; color: #5f6368;">
-        <p style="margin: 0; font-size: 0.85rem;">Komite Audit Intelligence System v{APP_VERSION}</p>
+        <p style="margin: 0; font-size: 0.85rem;">KAMI - Komite Audit Multi-Intelligence v{APP_VERSION}</p>
         <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem;">Developed by MS Hadianto · Founder Labbaik AI · © 2026</p>
     </div>
     """, unsafe_allow_html=True)
