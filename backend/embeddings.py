@@ -13,11 +13,20 @@ logger = logging.getLogger(__name__)
 
 class EmbeddingManager:
     """Manages text embeddings using Sentence Transformers"""
-    
+
     def __init__(self):
-        self.model = SentenceTransformer(settings.EMBEDDING_MODEL)
+        self._model = None
         self.dimension = settings.VECTOR_DIMENSION
-        logger.info(f"Embedding model loaded: {settings.EMBEDDING_MODEL}")
+        logger.info("EmbeddingManager initialized (model will load on first use)")
+
+    @property
+    def model(self):
+        """Lazy load the embedding model on first access"""
+        if self._model is None:
+            logger.info(f"Loading embedding model: {settings.EMBEDDING_MODEL}")
+            self._model = SentenceTransformer(settings.EMBEDDING_MODEL)
+            logger.info(f"Embedding model loaded: {settings.EMBEDDING_MODEL}")
+        return self._model
     
     def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for a single text"""
