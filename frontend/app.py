@@ -729,7 +729,7 @@ with st.sidebar:
     # Footer
     st.markdown(f"""
     <div style="position: absolute; bottom: 1rem; left: 0; right: 0; text-align: center;">
-        <p style="color: rgba(255,255,255,0.3); font-size: 0.65rem; margin: 0;">v{APP_VERSION} · MS Hadianto</p>
+        <p style="color: rgba(255,255,255,0.3); font-size: 0.65rem; margin: 0;">v{APP_VERSION} · Labbaik AI</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -886,10 +886,10 @@ if selected == "Beranda":
         </div>
         <div class="footer-divider"></div>
         <div class="footer-developer">
-            Developed by <strong>MS Hadianto</strong> · KIM Consulting · HADIANT Platform
+            Developed by <strong>MS Hadianto</strong> · Founder Labbaik AI
         </div>
         <div class="footer-version">
-            Komite Audit Intelligence System v{APP_VERSION} · © 2024
+            Komite Audit Intelligence System v{APP_VERSION} · © 2026
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1283,6 +1283,6 @@ elif selected == "Tentang":
     st.markdown(f"""
     <div style="text-align: center; padding: 2rem 0; color: #5f6368;">
         <p style="margin: 0; font-size: 0.85rem;">Komite Audit Intelligence System v{APP_VERSION}</p>
-        <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem;">Developed by MS Hadianto · KIM Consulting · HADIANT Platform</p>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem;">Developed by MS Hadianto · Founder Labbaik AI · © 2026</p>
     </div>
     """, unsafe_allow_html=True)
