@@ -11,11 +11,11 @@ class Settings(BaseSettings):
 
     # Groq Configuration (for agent responses)
     GROQ_API_KEY: str
-    GROQ_MODEL: str = "llama-3.1-70b-versatile"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
 
     # GLM/Zhipu AI Configuration (for query routing)
     GLM_API_KEY: str = ""
-    GLM_MODEL: str = "glm-4-flash"
+    GLM_MODEL: str = "glm-4-plus"
     GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
     
     # Supabase Configuration
