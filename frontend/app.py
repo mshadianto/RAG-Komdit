@@ -35,80 +35,343 @@ if 'conversation_history' not in st.session_state:
 if 'prefilled_query' not in st.session_state:
     st.session_state.prefilled_query = ""
 
-# McKinsey-style Professional CSS with Landing Page Enhancements
+# Midnight Vault Dark Theme CSS
 st.markdown("""
 <style>
     /* Import Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-    /* Global Styles */
-    .stApp {
+    /* Global Styles - Midnight Vault Theme */
+    html, body, [class*="css"], .stApp {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #0E1117 !important;
+        color: #E0E0E0 !important;
     }
 
-    /* Color Variables - McKinsey Navy Theme */
+    /* Main content text colors */
+    .stApp p, .stApp li, .stApp span, .stApp div {
+        color: #E0E0E0;
+    }
+
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {
+        color: #FFFFFF !important;
+    }
+
+    .stApp strong, .stApp b {
+        color: #00C6FF !important;
+    }
+
+    .stMarkdown p, .stMarkdown li {
+        color: #B0B0B0 !important;
+    }
+
+    .stMarkdown strong, .stMarkdown b {
+        color: #00C6FF !important;
+    }
+
+    /* Ensure all text is readable */
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li,
+    [data-testid="stMarkdownContainer"] span {
+        color: #B0B0B0 !important;
+    }
+
+    [data-testid="stMarkdownContainer"] strong,
+    [data-testid="stMarkdownContainer"] b {
+        color: #00C6FF !important;
+    }
+
+    [data-testid="stMarkdownContainer"] h1,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3,
+    [data-testid="stMarkdownContainer"] h4 {
+        color: #FFFFFF !important;
+    }
+
+    /* Color Variables - Midnight Vault Theme */
     :root {
-        --primary-navy: #003366;
-        --secondary-navy: #0a4d8c;
-        --accent-teal: #0097a7;
-        --light-gray: #f5f7fa;
-        --medium-gray: #e8eaed;
-        --dark-gray: #5f6368;
-        --text-primary: #1a1a2e;
-        --text-secondary: #5f6368;
-        --white: #ffffff;
-        --success: #0d7377;
-        --border: #e0e0e0;
+        --bg-primary: #0E1117;
+        --bg-secondary: #141A23;
+        --bg-card: rgba(30, 39, 50, 0.5);
+        --bg-card-hover: rgba(30, 39, 50, 0.8);
+        --accent-cyan: #00C6FF;
+        --accent-blue: #0072FF;
+        --accent-green: #00FF41;
+        --text-primary: #FFFFFF;
+        --text-secondary: #B0B0B0;
+        --text-muted: #6B7280;
+        --border-color: rgba(0, 198, 255, 0.2);
+        --border-hover: rgba(0, 198, 255, 0.4);
+        --glow-cyan: rgba(0, 198, 255, 0.6);
+    }
+
+    /* Sidebar Styling - Glassmorphism */
+    [data-testid="stSidebar"] {
+        background-color: #0a0e14 !important;
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(0, 198, 255, 0.2) !important;
+    }
+
+    [data-testid="stSidebar"] > div:first-child {
+        background-color: #0a0e14 !important;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        background-color: transparent !important;
+    }
+
+    [data-testid="stSidebar"] .stMarkdown {
+        color: #FFFFFF !important;
+    }
+
+    [data-testid="stSidebar"] .stMarkdown p {
+        color: #B0B0B0 !important;
+    }
+
+    [data-testid="stSidebar"] hr {
+        border-color: rgba(0, 198, 255, 0.2) !important;
+    }
+
+    [data-testid="stSidebar"] label {
+        color: #B0B0B0 !important;
+    }
+
+    [data-testid="stSidebar"] .stCheckbox label span {
+        color: #B0B0B0 !important;
+    }
+
+    [data-testid="stSidebar"] .stSlider label {
+        color: #B0B0B0 !important;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] {
+        color: #B0B0B0 !important;
+    }
+
+    /* Sidebar widget text */
+    section[data-testid="stSidebar"] * {
+        color: #E0E0E0;
+    }
+
+    section[data-testid="stSidebar"] .stMarkdown h1,
+    section[data-testid="stSidebar"] .stMarkdown h2,
+    section[data-testid="stSidebar"] .stMarkdown h3 {
+        color: #00C6FF !important;
+    }
+
+    /* Option Menu in Sidebar - Force Dark Theme */
+    [data-testid="stSidebar"] .nav-link,
+    .nav-link {
+        color: #B0B0B0 !important;
+        background-color: transparent !important;
+    }
+
+    [data-testid="stSidebar"] .nav-link:hover,
+    .nav-link:hover {
+        color: #00C6FF !important;
+        background-color: rgba(0, 198, 255, 0.1) !important;
+    }
+
+    [data-testid="stSidebar"] .nav-link-selected,
+    .nav-link-selected {
+        color: #00C6FF !important;
+        background-color: rgba(0, 198, 255, 0.15) !important;
+    }
+
+    /* Force dark background on option menu container */
+    [data-testid="stSidebar"] div[data-testid="stVerticalBlockBorderWrapper"],
+    [data-testid="stSidebar"] .css-1cypcdb,
+    [data-testid="stSidebar"] .css-1v0mbdj,
+    [data-testid="stSidebar"] .st-emotion-cache-1cypcdb,
+    [data-testid="stSidebar"] .st-emotion-cache-1v0mbdj,
+    [data-testid="stSidebar"] [data-baseweb="tab-list"],
+    [data-testid="stSidebar"] .css-pkbazv,
+    [data-testid="stSidebar"] .st-emotion-cache-pkbazv {
+        background-color: #0a0e14 !important;
+    }
+
+    /* Option menu specific overrides */
+    .css-1adrfps, .st-emotion-cache-1adrfps,
+    .css-z5fcl4, .st-emotion-cache-z5fcl4 {
+        background-color: #0a0e14 !important;
+    }
+
+    div[data-testid="stSidebarNav"],
+    div[data-testid="stSidebarNav"] > ul {
+        background-color: #0a0e14 !important;
+    }
+
+    /* Force ALL sidebar elements to dark background */
+    [data-testid="stSidebar"] div,
+    [data-testid="stSidebar"] nav,
+    [data-testid="stSidebar"] ul,
+    [data-testid="stSidebar"] li {
+        background-color: transparent !important;
+    }
+
+    [data-testid="stSidebar"] > div > div {
+        background-color: #0a0e14 !important;
+    }
+
+    /* streamlit-option-menu specific fix */
+    [data-testid="stSidebar"] iframe + div,
+    [data-testid="stSidebar"] .stSelectbox > div,
+    [data-testid="stSidebar"] .element-container {
+        background-color: transparent !important;
+    }
+
+    /* Checkbox in sidebar */
+    [data-testid="stSidebar"] [data-testid="stCheckbox"] {
+        color: #B0B0B0 !important;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stCheckbox"] label {
+        color: #B0B0B0 !important;
+    }
+
+    /* Slider in sidebar */
+    [data-testid="stSidebar"] .stSlider [data-testid="stTickBarMin"],
+    [data-testid="stSidebar"] .stSlider [data-testid="stTickBarMax"] {
+        color: #6B7280 !important;
+    }
+
+    [data-testid="stSidebar"] .stSlider [data-testid="stThumbValue"] {
+        color: #00C6FF !important;
+    }
+
+    /* Chat Message Styling */
+    .stChatMessage {
+        background-color: rgba(30, 39, 50, 0.5) !important;
+        border-radius: 10px !important;
+        border: 1px solid rgba(0, 150, 255, 0.2) !important;
+    }
+
+    /* Button Styling - Gradient */
+    .stButton > button {
+        background: linear-gradient(90deg, #00C6FF 0%, #0072FF 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        padding: 0.6rem 1.5rem !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stButton > button:hover {
+        box-shadow: 0px 0px 20px rgba(0, 198, 255, 0.6) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    .stButton > button:active {
+        transform: translateY(0) !important;
+    }
+
+    /* Secondary Button */
+    .stButton > button[kind="secondary"],
+    [data-testid="stSidebar"] .stButton > button {
+        background: rgba(0, 198, 255, 0.1) !important;
+        border: 1px solid rgba(0, 198, 255, 0.4) !important;
+        color: #00C6FF !important;
+    }
+
+    .stButton > button[kind="secondary"]:hover,
+    [data-testid="stSidebar"] .stButton > button:hover {
+        background: rgba(0, 198, 255, 0.2) !important;
+        border-color: #00C6FF !important;
+        box-shadow: 0 0 15px rgba(0, 198, 255, 0.3) !important;
+    }
+
+    /* Pulse Animation */
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 255, 65, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); }
+    }
+
+    .pulse-dot {
+        height: 10px;
+        width: 10px;
+        background-color: #00FF41;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse 2s infinite;
     }
 
     /* ===== LANDING PAGE STYLES ===== */
 
-    /* Hero Section */
+    /* Hero Section - Vault Style */
     .hero-section {
-        background: linear-gradient(135deg, #003366 0%, #0a4d8c 50%, #0097a7 100%);
+        background: linear-gradient(135deg, rgba(30, 39, 50, 0.9) 0%, rgba(10, 15, 25, 0.95) 100%);
+        border: 1px solid rgba(0, 198, 255, 0.3);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
         color: white;
         padding: 3rem 2rem;
-        border-radius: 12px;
+        border-radius: 15px;
         margin-bottom: 2rem;
         text-align: center;
     }
 
     .hero-title {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
+        font-size: 2.8rem;
+        font-weight: 800;
+        margin-bottom: 0.25rem;
         letter-spacing: -1px;
+        background: linear-gradient(90deg, #00C6FF 0%, #0072FF 50%, #00C6FF 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
     .hero-subtitle {
-        font-size: 1.2rem;
-        opacity: 0.9;
-        margin-bottom: 1rem;
-        font-weight: 400;
+        font-size: 1.1rem;
+        color: #FFFFFF;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .hero-tagline {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        color: #00FF41;
+        margin-bottom: 1.5rem;
+        letter-spacing: 1px;
     }
 
     .hero-description {
         font-size: 1rem;
-        opacity: 0.8;
+        color: #E0E0E0;
         max-width: 700px;
         margin: 0 auto 1.5rem auto;
-        line-height: 1.6;
+        line-height: 1.7;
     }
 
     .hero-badge {
         display: inline-block;
-        background: rgba(255,255,255,0.2);
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
+        background: rgba(0, 198, 255, 0.15);
+        border: 1px solid rgba(0, 198, 255, 0.3);
+        padding: 0.5rem 1.25rem;
+        border-radius: 25px;
         font-size: 0.85rem;
+        color: #00C6FF;
         margin-top: 0.5rem;
     }
 
-    /* Agent Cards for Landing */
+    .hero-engine {
+        background: rgba(0, 198, 255, 0.05);
+        padding: 12px 20px;
+        border-left: 4px solid #0072FF;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.85rem;
+        color: #B0B0B0;
+        margin-top: 1.5rem;
+        display: inline-block;
+    }
+
+    /* Agent Cards for Landing - Dark Theme */
     .agent-card-landing {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
+        background: rgba(30, 39, 50, 0.6);
+        border: 1px solid rgba(0, 198, 255, 0.15);
+        border-radius: 12px;
         padding: 1.5rem;
         height: 100%;
         transition: all 0.3s ease;
@@ -116,9 +379,10 @@ st.markdown("""
     }
 
     .agent-card-landing:hover {
-        box-shadow: 0 8px 25px rgba(0,51,102,0.15);
-        transform: translateY(-2px);
-        border-color: #0097a7;
+        background: rgba(30, 39, 50, 0.9);
+        box-shadow: 0 8px 30px rgba(0, 198, 255, 0.15);
+        transform: translateY(-3px);
+        border-color: rgba(0, 198, 255, 0.4);
     }
 
     .agent-icon {
@@ -127,14 +391,14 @@ st.markdown("""
     }
 
     .agent-card-landing h4 {
-        color: #003366;
+        color: #00C6FF;
         font-size: 1rem;
         font-weight: 600;
         margin-bottom: 0.5rem;
     }
 
     .agent-card-landing p {
-        color: #5f6368;
+        color: #B0B0B0;
         font-size: 0.85rem;
         line-height: 1.5;
         margin-bottom: 0.75rem;
@@ -143,7 +407,7 @@ st.markdown("""
     .agent-card-landing ul {
         margin: 0;
         padding-left: 1.2rem;
-        color: #5f6368;
+        color: #6B7280;
         font-size: 0.8rem;
     }
 
@@ -151,11 +415,12 @@ st.markdown("""
         margin-bottom: 0.25rem;
     }
 
-    /* How It Works Section */
+    /* How It Works Section - Dark Theme */
     .how-it-works {
-        background: #f5f7fa;
+        background: rgba(20, 26, 35, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.05);
         padding: 2rem;
-        border-radius: 12px;
+        border-radius: 15px;
         margin: 2rem 0;
     }
 
@@ -167,7 +432,7 @@ st.markdown("""
     .step-number {
         width: 50px;
         height: 50px;
-        background: linear-gradient(135deg, #003366 0%, #0097a7 100%);
+        background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
         color: white;
         border-radius: 50%;
         display: flex;
@@ -176,77 +441,52 @@ st.markdown("""
         font-size: 1.5rem;
         font-weight: 700;
         margin: 0 auto 1rem auto;
+        box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
     }
 
     .step-title {
-        color: #003366;
+        color: #FFFFFF;
         font-size: 1rem;
         font-weight: 600;
         margin-bottom: 0.5rem;
     }
 
     .step-desc {
-        color: #5f6368;
+        color: #6B7280;
         font-size: 0.85rem;
         line-height: 1.5;
     }
 
-    /* Example Query Cards */
-    .example-query-card {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-left: 4px solid #0097a7;
-        border-radius: 0 8px 8px 0;
-        padding: 1rem 1.25rem;
-        margin: 0.5rem 0;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .example-query-card:hover {
-        background: #f5f7fa;
-        border-left-color: #003366;
-        box-shadow: 0 2px 8px rgba(0,51,102,0.1);
-    }
-
-    .example-query-card p {
-        margin: 0;
-        color: #1a1a2e;
-        font-size: 0.9rem;
-    }
-
-    .example-query-card span {
-        color: #0097a7;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    /* Stats Cards */
+    /* Stats Cards - Dark Theme */
     .stat-card {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
+        background: rgba(30, 39, 50, 0.6);
+        border: 1px solid rgba(0, 198, 255, 0.15);
+        border-radius: 12px;
         padding: 1.5rem;
         text-align: center;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
     }
 
     .stat-card:hover {
-        box-shadow: 0 4px 12px rgba(0,51,102,0.1);
+        box-shadow: 0 4px 20px rgba(0, 198, 255, 0.2);
+        border-color: rgba(0, 198, 255, 0.3);
     }
 
     .stat-value {
         font-size: 2.5rem;
         font-weight: 700;
-        color: #003366;
+        background: linear-gradient(90deg, #00C6FF 0%, #0072FF 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
         line-height: 1;
     }
 
     .stat-label {
-        font-size: 0.85rem;
-        color: #5f6368;
+        font-size: 0.8rem;
+        color: #6B7280;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
         margin-top: 0.5rem;
     }
 
@@ -255,29 +495,29 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
 
-    /* Section Headers */
+    /* Section Headers - Dark Theme */
     .section-title {
         font-size: 1.5rem;
         font-weight: 600;
-        color: #003366;
+        color: #FFFFFF;
         text-align: center;
         margin-bottom: 0.5rem;
     }
 
     .section-subtitle {
         font-size: 1rem;
-        color: #5f6368;
+        color: #6B7280;
         text-align: center;
         margin-bottom: 2rem;
     }
 
-    /* ===== EXISTING STYLES ===== */
+    /* ===== MAIN CONTENT STYLES ===== */
 
     /* Main Header */
     .main-header {
         font-size: 2rem;
-        font-weight: 600;
-        color: var(--primary-navy);
+        font-weight: 700;
+        color: #00C6FF;
         text-align: left;
         padding: 0.5rem 0;
         margin-bottom: 0.25rem;
@@ -286,11 +526,11 @@ st.markdown("""
 
     .sub-header {
         font-size: 1rem;
-        color: var(--text-secondary);
+        color: #6B7280;
         text-align: left;
         padding-bottom: 1.5rem;
         font-weight: 400;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         margin-bottom: 2rem;
     }
 
@@ -298,36 +538,37 @@ st.markdown("""
     .section-header {
         font-size: 1.1rem;
         font-weight: 600;
-        color: var(--primary-navy);
+        color: #FFFFFF;
         margin: 1.5rem 0 1rem 0;
         padding-bottom: 0.5rem;
-        border-bottom: 2px solid var(--accent-teal);
+        border-bottom: 2px solid #00C6FF;
         display: inline-block;
     }
 
     /* Agent Cards */
     .agent-card {
-        background-color: var(--white);
-        border: 1px solid var(--border);
-        border-radius: 4px;
+        background-color: rgba(30, 39, 50, 0.6);
+        border: 1px solid rgba(0, 198, 255, 0.15);
+        border-radius: 10px;
         padding: 1.25rem;
         margin: 0.5rem 0;
-        transition: box-shadow 0.2s ease;
+        transition: all 0.3s ease;
     }
 
     .agent-card:hover {
-        box-shadow: 0 2px 8px rgba(0,51,102,0.1);
+        box-shadow: 0 4px 15px rgba(0, 198, 255, 0.2);
+        border-color: rgba(0, 198, 255, 0.3);
     }
 
     .agent-card h4 {
-        color: var(--primary-navy);
+        color: #00C6FF;
         font-size: 0.95rem;
         font-weight: 600;
         margin-bottom: 0.5rem;
     }
 
     .agent-card p {
-        color: var(--text-secondary);
+        color: #B0B0B0;
         font-size: 0.85rem;
         line-height: 1.5;
         margin: 0;
@@ -335,45 +576,46 @@ st.markdown("""
 
     /* Query Box */
     .query-box {
-        background-color: var(--light-gray);
-        border-left: 3px solid var(--primary-navy);
+        background-color: rgba(30, 39, 50, 0.6);
+        border-left: 3px solid #00C6FF;
         padding: 1rem 1.25rem;
         margin: 1rem 0;
-        border-radius: 0 4px 4px 0;
+        border-radius: 0 10px 10px 0;
     }
 
     .query-box strong {
-        color: var(--primary-navy);
+        color: #00C6FF;
         font-weight: 600;
     }
 
     .query-meta {
-        color: var(--text-secondary);
+        color: #6B7280;
         font-size: 0.75rem;
         margin-top: 0.5rem;
     }
 
     /* Response Box */
     .response-box {
-        background-color: var(--white);
-        border: 1px solid var(--border);
-        border-left: 3px solid var(--accent-teal);
+        background-color: rgba(20, 26, 35, 0.8);
+        border: 1px solid rgba(0, 198, 255, 0.15);
+        border-left: 3px solid #00FF41;
         padding: 1.25rem;
         margin: 0.75rem 0 1.5rem 0;
-        border-radius: 0 4px 4px 0;
+        border-radius: 0 10px 10px 0;
         line-height: 1.7;
+        color: #E0E0E0;
     }
 
     .response-box strong {
-        color: var(--accent-teal);
+        color: #00FF41;
         font-weight: 600;
     }
 
     /* Metric Cards */
     .metric-card {
-        background: var(--white);
-        border: 1px solid var(--border);
-        border-radius: 4px;
+        background: rgba(30, 39, 50, 0.6);
+        border: 1px solid rgba(0, 198, 255, 0.15);
+        border-radius: 10px;
         padding: 1.5rem;
         text-align: center;
     }
@@ -381,98 +623,65 @@ st.markdown("""
     .metric-value {
         font-size: 2rem;
         font-weight: 600;
-        color: var(--primary-navy);
+        color: #00C6FF;
     }
 
     .metric-label {
         font-size: 0.85rem;
-        color: var(--text-secondary);
+        color: #6B7280;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-top: 0.25rem;
     }
 
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: var(--primary-navy);
-    }
-
-    [data-testid="stSidebar"] .stMarkdown {
-        color: var(--white);
-    }
-
-    [data-testid="stSidebar"] hr {
-        border-color: rgba(255,255,255,0.2);
-    }
-
-    /* Button Styling */
-    .stButton > button {
-        background-color: var(--primary-navy);
-        color: var(--white);
-        border: none;
-        border-radius: 4px;
-        padding: 0.5rem 1.5rem;
-        font-weight: 500;
-        transition: background-color 0.2s ease;
-    }
-
-    .stButton > button:hover {
-        background-color: var(--secondary-navy);
-    }
-
-    .stButton > button[kind="primary"] {
-        background-color: var(--accent-teal);
-    }
-
-    .stButton > button[kind="primary"]:hover {
-        background-color: #007d87;
-    }
-
     /* Document Card */
     .doc-card {
-        background: var(--white);
-        border: 1px solid var(--border);
-        border-radius: 4px;
+        background: rgba(30, 39, 50, 0.6);
+        border: 1px solid rgba(0, 198, 255, 0.15);
+        border-radius: 10px;
         padding: 1rem;
         margin: 0.5rem 0;
     }
 
     .doc-title {
         font-weight: 600;
-        color: var(--primary-navy);
+        color: #00C6FF;
     }
 
     .doc-meta {
         font-size: 0.85rem;
-        color: var(--text-secondary);
+        color: #6B7280;
     }
 
     /* Status Badges */
     .status-processed {
-        background-color: #e6f4ea;
-        color: #1e7e34;
+        background-color: rgba(0, 255, 65, 0.15);
+        color: #00FF41;
         padding: 0.25rem 0.75rem;
         border-radius: 12px;
         font-size: 0.75rem;
         font-weight: 500;
+        border: 1px solid rgba(0, 255, 65, 0.3);
     }
 
     .status-processing {
-        background-color: #fff3e0;
-        color: #e65100;
+        background-color: rgba(255, 170, 0, 0.15);
+        color: #FFAA00;
         padding: 0.25rem 0.75rem;
         border-radius: 12px;
         font-size: 0.75rem;
         font-weight: 500;
+        border: 1px solid rgba(255, 170, 0, 0.3);
     }
 
     .status-error {
-        background-color: #fce8e6;
-        color: #c5221f;
+        background-color: rgba(255, 65, 65, 0.15);
+        color: #FF4141;
         padding: 0.25rem 0.75rem;
         border-radius: 12px;
         font-size: 0.75rem;
         font-weight: 500;
+        border: 1px solid rgba(255, 65, 65, 0.3);
     }
 
     /* Hide Streamlit Branding */
@@ -481,81 +690,267 @@ st.markdown("""
 
     /* Info boxes */
     .info-box {
-        background: linear-gradient(135deg, var(--primary-navy) 0%, var(--secondary-navy) 100%);
-        color: var(--white);
+        background: linear-gradient(135deg, rgba(0, 114, 255, 0.2) 0%, rgba(0, 198, 255, 0.1) 100%);
+        border: 1px solid rgba(0, 198, 255, 0.3);
+        color: #FFFFFF;
         padding: 1.5rem;
-        border-radius: 4px;
+        border-radius: 12px;
         margin: 1rem 0;
     }
 
     .info-box h3 {
         margin: 0 0 0.5rem 0;
         font-weight: 600;
+        color: #00C6FF;
     }
 
     .info-box p {
         margin: 0;
-        opacity: 0.9;
+        color: #B0B0B0;
         font-size: 0.9rem;
     }
 
     /* Table Styling */
     .dataframe {
         border: none !important;
+        background: transparent !important;
     }
 
     .dataframe th {
-        background-color: var(--primary-navy) !important;
-        color: var(--white) !important;
+        background-color: rgba(0, 114, 255, 0.3) !important;
+        color: #FFFFFF !important;
         font-weight: 500 !important;
     }
 
     .dataframe td {
-        border-color: var(--border) !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        color: #E0E0E0 !important;
     }
 
     /* Expander Styling */
     .streamlit-expanderHeader {
         font-weight: 500;
-        color: var(--primary-navy);
+        color: #00C6FF !important;
+        background: rgba(30, 39, 50, 0.6) !important;
+        border-radius: 10px !important;
+    }
+
+    [data-testid="stExpander"] {
+        background-color: rgba(30, 39, 50, 0.4) !important;
+        border: 1px solid rgba(0, 198, 255, 0.15) !important;
+        border-radius: 10px !important;
+    }
+
+    [data-testid="stExpander"] summary {
+        color: #00C6FF !important;
+    }
+
+    [data-testid="stExpander"] summary span {
+        color: #00C6FF !important;
+    }
+
+    [data-testid="stExpander"] [data-testid="stMarkdownContainer"] {
+        color: #B0B0B0 !important;
+    }
+
+    /* Text Input Styling */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea {
+        background-color: rgba(30, 39, 50, 0.8) !important;
+        border: 1px solid rgba(0, 198, 255, 0.2) !important;
+        border-radius: 10px !important;
+        color: #FFFFFF !important;
+    }
+
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #00C6FF !important;
+        box-shadow: 0 0 10px rgba(0, 198, 255, 0.3) !important;
+    }
+
+    /* Select Box Styling */
+    .stSelectbox > div > div {
+        background-color: rgba(30, 39, 50, 0.8) !important;
+        border: 1px solid rgba(0, 198, 255, 0.2) !important;
+        border-radius: 10px !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Checkbox Styling */
+    .stCheckbox > label {
+        color: #B0B0B0 !important;
+    }
+
+    /* Slider Styling */
+    .stSlider > div > div > div {
+        background: linear-gradient(90deg, #00C6FF 0%, #0072FF 100%) !important;
+    }
+
+    /* File Uploader */
+    .stFileUploader > div {
+        background-color: rgba(30, 39, 50, 0.6) !important;
+        border: 2px dashed rgba(0, 198, 255, 0.3) !important;
+        border-radius: 12px !important;
+    }
+
+    .stFileUploader > div:hover {
+        border-color: #00C6FF !important;
     }
 
     /* Footer Styling */
     .app-footer {
-        background: linear-gradient(135deg, #003366 0%, #0a4d8c 100%);
+        background: linear-gradient(135deg, rgba(30, 39, 50, 0.9) 0%, rgba(10, 15, 25, 0.95) 100%);
+        border: 1px solid rgba(0, 198, 255, 0.2);
         color: white;
         padding: 2rem;
-        border-radius: 12px;
+        border-radius: 15px;
         margin-top: 3rem;
         text-align: center;
     }
 
     .footer-disclaimer {
         font-size: 0.8rem;
-        opacity: 0.8;
+        color: #B0B0B0;
         line-height: 1.6;
         max-width: 800px;
         margin: 0 auto 1.5rem auto;
         padding: 1rem;
-        background: rgba(255,255,255,0.1);
+        background: rgba(0, 198, 255, 0.05);
+        border: 1px solid rgba(0, 198, 255, 0.15);
         border-radius: 8px;
     }
 
     .footer-developer {
         font-size: 0.9rem;
+        color: #E0E0E0;
         margin-bottom: 0.5rem;
     }
 
     .footer-version {
         font-size: 0.75rem;
-        opacity: 0.6;
+        color: #6B7280;
     }
 
     .footer-divider {
         width: 60px;
         height: 2px;
-        background: rgba(255,255,255,0.3);
+        background: linear-gradient(90deg, #00C6FF, #0072FF);
         margin: 1rem auto;
+    }
+
+    /* Plotly Chart Background Fix */
+    .js-plotly-plot .plotly .modebar {
+        background: transparent !important;
+    }
+
+    /* Number Input */
+    .stNumberInput > div > div > input {
+        background-color: rgba(30, 39, 50, 0.8) !important;
+        border: 1px solid rgba(0, 198, 255, 0.2) !important;
+        border-radius: 10px !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Metric Widget Override */
+    [data-testid="stMetricValue"] {
+        color: #00C6FF !important;
+    }
+
+    [data-testid="stMetricLabel"] {
+        color: #6B7280 !important;
+    }
+
+    /* Labels and Help Text */
+    .stTextInput label, .stTextArea label, .stSelectbox label,
+    .stSlider label, .stCheckbox label, .stNumberInput label,
+    .stFileUploader label {
+        color: #B0B0B0 !important;
+    }
+
+    /* Widget help text */
+    .stTooltipIcon {
+        color: #6B7280 !important;
+    }
+
+    /* Spinner text */
+    .stSpinner > div {
+        color: #00C6FF !important;
+    }
+
+    /* Divider / horizontal rule */
+    hr {
+        border-color: rgba(0, 198, 255, 0.2) !important;
+    }
+
+    /* Links */
+    a {
+        color: #00C6FF !important;
+    }
+
+    a:hover {
+        color: #00FF41 !important;
+    }
+
+    /* Success/Error/Info Messages */
+    .stSuccess {
+        background-color: rgba(0, 255, 65, 0.1) !important;
+        border: 1px solid rgba(0, 255, 65, 0.3) !important;
+        color: #00FF41 !important;
+    }
+
+    .stError {
+        background-color: rgba(255, 65, 65, 0.1) !important;
+        border: 1px solid rgba(255, 65, 65, 0.3) !important;
+        color: #FF4141 !important;
+    }
+
+    .stInfo {
+        background-color: rgba(0, 198, 255, 0.1) !important;
+        border: 1px solid rgba(0, 198, 255, 0.3) !important;
+        color: #00C6FF !important;
+    }
+
+    /* Welcome Vault Box */
+    .welcome-vault {
+        background: linear-gradient(135deg, rgba(30, 39, 50, 0.8) 0%, rgba(10, 15, 25, 0.9) 100%);
+        padding: 30px;
+        border-radius: 15px;
+        border: 1px solid rgba(0, 198, 255, 0.3);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        margin-bottom: 25px;
+    }
+
+    .welcome-vault h1 {
+        color: #00C6FF;
+        font-size: 2.2rem;
+        margin-bottom: 0;
+    }
+
+    .welcome-vault .status {
+        color: #00FF41;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        margin-top: 5px;
+    }
+
+    .welcome-vault hr {
+        border: 0;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        margin: 20px 0;
+    }
+
+    .welcome-vault p {
+        color: #E0E0E0;
+        font-size: 1.1rem;
+    }
+
+    .welcome-vault .engine-info {
+        background: rgba(0, 198, 255, 0.05);
+        padding: 12px;
+        border-left: 4px solid #0072FF;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        color: #B0B0B0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -649,20 +1044,20 @@ EXAMPLE_QUERIES = [
 
 # Sidebar
 with st.sidebar:
-    # Logo and Title
+    # Logo and Title - Midnight Vault Style
     st.markdown("""
-    <div style="padding: 1.5rem 1rem; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1);">
-        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0097a7 0%, #00bcd4 100%); border-radius: 12px; margin: 0 auto 0.75rem auto; display: flex; align-items: center; justify-content: center;">
-            <span style="color: white; font-size: 1.2rem; font-weight: 700;">KAMI</span>
+    <div style="padding: 1.5rem 1rem; text-align: center; border-bottom: 1px solid rgba(0, 198, 255, 0.15);">
+        <div style="width: 55px; height: 55px; background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); border-radius: 14px; margin: 0 auto 0.75rem auto; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);">
+            <span style="color: white; font-size: 1.3rem; font-weight: 800; letter-spacing: -1px;">KAMI</span>
         </div>
-        <h3 style="color: white; font-weight: 600; margin: 0; font-size: 1rem;">Komite Audit Multi-Intelligence</h3>
-        <p style="color: rgba(255,255,255,0.5); font-size: 0.6rem; margin-top: 0.25rem; letter-spacing: 0.5px; font-style: italic;">Multi-Agent Expertise for Strategic Oversight</p>
+        <h3 style="color: #00C6FF; font-weight: 600; margin: 0; font-size: 0.95rem;">Intelligence Hub</h3>
+        <p style="color: #00FF41; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; margin-top: 0.5rem; letter-spacing: 0.3px;">[ Multi-Agent Expertise for Strategic Oversight ]</p>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
 
-    # Navigation Menu
+    # Navigation Menu - Dark Theme
     selected = option_menu(
         menu_title=None,
         options=["Beranda", "Konsultasi", "Dokumen", "Analitik", "Tentang"],
@@ -670,21 +1065,25 @@ with st.sidebar:
         menu_icon="cast",
         default_index=0,
         styles={
-            "container": {"padding": "0", "background-color": "transparent"},
-            "icon": {"color": "#0097a7", "font-size": "1rem"},
+            "container": {"padding": "0", "background-color": "#0a0e14"},
+            "menu-title": {"color": "#00C6FF"},
+            "icon": {"color": "#00C6FF", "font-size": "1rem"},
             "nav-link": {
                 "font-size": "0.85rem",
                 "text-align": "left",
                 "margin": "0.15rem 0.5rem",
                 "padding": "0.7rem 1rem",
-                "color": "rgba(255,255,255,0.7)",
+                "color": "#B0B0B0",
+                "background-color": "transparent",
                 "border-radius": "8px",
-                "transition": "all 0.2s ease",
+                "transition": "all 0.3s ease",
+                "border": "1px solid transparent",
             },
             "nav-link-selected": {
-                "background-color": "rgba(0,151,167,0.2)",
-                "color": "white",
-                "font-weight": "500",
+                "background-color": "rgba(0, 198, 255, 0.15)",
+                "color": "#00C6FF",
+                "font-weight": "600",
+                "border": "1px solid rgba(0, 198, 255, 0.3)",
             },
         }
     )
@@ -695,7 +1094,7 @@ with st.sidebar:
     if selected in ["Konsultasi", "Beranda"]:
         st.markdown("""
         <div style="padding: 0 0.5rem;">
-            <p style="color: rgba(255,255,255,0.4); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.75rem;">Pengaturan</p>
+            <p style="color: #00C6FF; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.75rem;">Pengaturan</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -707,20 +1106,24 @@ with st.sidebar:
     # Session Section
     st.markdown("""
     <div style="padding: 0 0.5rem;">
-        <p style="color: rgba(255,255,255,0.4); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.5rem;">Sesi Aktif</p>
+        <p style="color: #00C6FF; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.5rem;">Sesi Aktif</p>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown(f"""
-    <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 0.75rem; margin: 0 0.5rem;">
-        <p style="color: rgba(255,255,255,0.5); font-size: 0.7rem; margin: 0;">Session ID</p>
-        <p style="color: rgba(255,255,255,0.8); font-size: 0.8rem; margin: 0.25rem 0 0 0; font-family: monospace;">{st.session_state.session_id[:12]}...</p>
+    <div style="background: rgba(0, 198, 255, 0.05); border: 1px solid rgba(0, 198, 255, 0.15); border-radius: 10px; padding: 0.75rem; margin: 0 0.5rem;">
+        <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+            <span class="pulse-dot" style="margin-right: 8px;"></span>
+            <span style="color: #00FF41; font-size: 0.7rem; font-family: 'JetBrains Mono', monospace;">ACTIVE</span>
+        </div>
+        <p style="color: #6B7280; font-size: 0.65rem; margin: 0;">Session ID</p>
+        <p style="color: #00C6FF; font-size: 0.75rem; margin: 0.25rem 0 0 0; font-family: 'JetBrains Mono', monospace;">{st.session_state.session_id[:12]}...</p>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("<div style='height: 0.75rem;'></div>", unsafe_allow_html=True)
 
-    if st.button("Mulai Sesi Baru", use_container_width=True, type="secondary"):
+    if st.button("Terminate Session", use_container_width=True, type="secondary"):
         st.session_state.session_id = str(uuid.uuid4())
         st.session_state.conversation_history = []
         st.session_state.prefilled_query = ""
@@ -729,27 +1132,26 @@ with st.sidebar:
     # Footer
     st.markdown(f"""
     <div style="position: absolute; bottom: 1rem; left: 0; right: 0; text-align: center;">
-        <p style="color: rgba(255,255,255,0.3); font-size: 0.65rem; margin: 0;">v{APP_VERSION} · Labbaik AI</p>
+        <p style="color: #6B7280; font-size: 0.6rem; margin: 0;">v{APP_VERSION} · <span style="color: #00C6FF;">Labbaik AI</span></p>
     </div>
     """, unsafe_allow_html=True)
 
 # ===== MAIN CONTENT =====
 
 if selected == "Beranda":
-    # Hero Section
+    # Hero Section - Midnight Vault Style
     st.markdown("""
     <div class="hero-section">
         <div class="hero-title">KAMI</div>
         <div class="hero-subtitle">Komite Audit Multi-Intelligence</div>
-        <div class="hero-description" style="font-style: italic; font-size: 1.1rem; opacity: 0.95; margin-bottom: 1.5rem;">
-            "Multi-Agent Expertise for Strategic Oversight"
-        </div>
+        <div class="hero-tagline">[ Multi-Agent Expertise for Strategic Oversight ]</div>
         <div class="hero-description">
             Dapatkan jawaban komprehensif dari 6 agen ahli yang terspesialisasi dalam berbagai aspek
             Komite Audit — mulai dari penyusunan charter, perencanaan audit, review keuangan,
             kepatuhan regulasi, hingga pelaporan.
         </div>
-        <div class="hero-badge">✨ Powered by RAG + Multi-Agent AI</div>
+        <div class="hero-badge">⚡ Powered by RAG + Multi-Agent AI</div>
+        <div class="hero-engine"><b>Core Engine:</b> Multi-Agent RAG Orchestrator (Groq + Supabase)</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1127,16 +1529,18 @@ elif selected == "Analitik":
                     x='category',
                     y='total_documents',
                     title='Dokumen per Kategori',
-                    color_discrete_sequence=['#003366']
+                    color_discrete_sequence=['#00C6FF']
                 )
                 fig.update_layout(
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    font=dict(family="Inter, sans-serif"),
-                    title_font=dict(size=14, color='#003366'),
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(family="Inter, sans-serif", color='#B0B0B0'),
+                    title_font=dict(size=14, color='#00C6FF'),
                     showlegend=False,
                     xaxis_title="",
-                    yaxis_title="Jumlah Dokumen"
+                    yaxis_title="Jumlah Dokumen",
+                    xaxis=dict(gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0'),
+                    yaxis=dict(gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0')
                 )
                 fig.update_xaxes(tickangle=45)
                 st.plotly_chart(fig, use_container_width=True)
@@ -1147,13 +1551,13 @@ elif selected == "Analitik":
                     values='total_chunks',
                     names='category',
                     title='Distribusi Chunk',
-                    color_discrete_sequence=px.colors.sequential.Blues_r
+                    color_discrete_sequence=['#00C6FF', '#0072FF', '#00FF41', '#FFAA00', '#FF4141', '#B0B0B0']
                 )
                 fig.update_layout(
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    font=dict(family="Inter, sans-serif"),
-                    title_font=dict(size=14, color='#003366'),
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(family="Inter, sans-serif", color='#B0B0B0'),
+                    title_font=dict(size=14, color='#00C6FF'),
                 )
                 st.plotly_chart(fig, use_container_width=True)
     else:
@@ -1175,23 +1579,25 @@ elif selected == "Analitik":
                     name='Total Eksekusi',
                     x=df['agent_name'],
                     y=df['total_executions'],
-                    marker_color='#003366'
+                    marker_color='#00C6FF'
                 ),
                 go.Bar(
                     name='Rata-rata Waktu (ms)',
                     x=df['agent_name'],
                     y=df['avg_execution_time'],
-                    marker_color='#0097a7'
+                    marker_color='#0072FF'
                 )
             ])
             fig.update_layout(
                 title='Metrik Performa Agen',
                 barmode='group',
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                font=dict(family="Inter, sans-serif"),
-                title_font=dict(size=14, color='#003366'),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(family="Inter, sans-serif", color='#B0B0B0'),
+                title_font=dict(size=14, color='#00C6FF'),
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color='#B0B0B0')),
+                xaxis=dict(gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0'),
+                yaxis=dict(gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0')
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -1202,18 +1608,19 @@ elif selected == "Analitik":
                 y='success_rate',
                 title='Tingkat Keberhasilan Agen',
                 color='success_rate',
-                color_continuous_scale=['#fce8e6', '#e6f4ea'],
+                color_continuous_scale=['#FF4141', '#00FF41'],
                 range_color=[0, 1]
             )
             fig.update_layout(
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                font=dict(family="Inter, sans-serif"),
-                title_font=dict(size=14, color='#003366'),
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(family="Inter, sans-serif", color='#B0B0B0'),
+                title_font=dict(size=14, color='#00C6FF'),
                 showlegend=False,
                 xaxis_title="",
                 yaxis_title="Success Rate",
-                yaxis=dict(tickformat='.0%')
+                yaxis=dict(tickformat='.0%', gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0'),
+                xaxis=dict(gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0')
             )
             st.plotly_chart(fig, use_container_width=True)
     else:
@@ -1284,8 +1691,8 @@ elif selected == "Tentang":
     st.markdown("---")
 
     st.markdown(f"""
-    <div style="text-align: center; padding: 2rem 0; color: #5f6368;">
-        <p style="margin: 0; font-size: 0.85rem;">KAMI - Komite Audit Multi-Intelligence v{APP_VERSION}</p>
-        <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem;">Developed by MS Hadianto · Founder Labbaik AI · © 2026</p>
+    <div style="text-align: center; padding: 2rem 0;">
+        <p style="margin: 0; font-size: 0.85rem; color: #00C6FF;">KAMI - Komite Audit Multi-Intelligence v{APP_VERSION}</p>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem; color: #6B7280;">Developed by <span style="color: #00FF41;">MS Hadianto</span> · Founder Labbaik AI · © 2026</p>
     </div>
     """, unsafe_allow_html=True)
