@@ -35,7 +35,9 @@ Frontend runs at http://localhost:8501 (configurable via `API_BASE_URL` env var)
 
 ### Run tests
 ```bash
-pytest tests/
+pytest tests/                          # All tests
+pytest tests/test_embeddings.py        # Single test file
+pytest tests/test_embeddings.py -k "test_name"  # Single test function
 ```
 
 ### Deployment (Railway)
@@ -50,7 +52,7 @@ Project is configured for Railway deployment via `railway.json` and `nixpacks.to
 - **ResponseSynthesizer**: Combines responses from multiple agents into coherent answer
 
 Query flow:
-1. Router analyzes query using GLM (glm-4-flash) and selects primary/secondary agents (max controlled by `max_agents` param). Falls back to Groq if GLM not configured.
+1. Router analyzes query using GLM (glm-4-plus) and selects primary/secondary agents (max controlled by `max_agents` param). Falls back to Groq if GLM not configured.
 2. Orchestrator retrieves relevant context via `similarity_search()` (default threshold: 0.7, top_k: 5)
 3. Gets conversation history for session context (last 5 messages)
 4. Selected agents process query with context in sequence
@@ -69,7 +71,7 @@ Query flow:
   - `GET /agents`: List available expert agents
 - **database.py**: Supabase client wrapper, handles documents, embeddings, conversations, agent logs
 - **embeddings.py**: Sentence Transformers wrapper (all-MiniLM-L6-v2, 384 dimensions). Uses lazy loading - model downloads on first query, not at startup
-- **llm_client.py**: Dual-LLM client - GLM/Zhipu AI for routing (glm-4-flash), Groq for responses (Llama 3.1 70B)
+- **llm_client.py**: Dual-LLM client - GLM/Zhipu AI for routing (glm-4-plus), Groq for responses (Llama 3.3 70B)
 - **document_processor.py**: Extracts text from PDF/DOCX/TXT/XLSX, auto-detects category, generates embeddings. Supported formats defined in `SUPPORTED_FORMATS` dict
 
 ### Configuration (`config/`)
@@ -94,9 +96,9 @@ Session state: `session_id` (UUID), `conversation_history` (list of query/respon
 Environment variables in `.env`:
 - `GROQ_API_KEY`: Required for LLM responses
 - `GLM_API_KEY`: Required for query routing (Zhipu AI)
-- `GLM_MODEL`: Default `glm-4-flash`
+- `GLM_MODEL`: Default `glm-4-plus`
 - `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_SERVICE_KEY`: Required for vector store
-- `GROQ_MODEL`: Default `llama-3.1-70b-versatile`
+- `GROQ_MODEL`: Default `llama-3.3-70b-versatile`
 - `EMBEDDING_MODEL`: Default `sentence-transformers/all-MiniLM-L6-v2`
 - `VECTOR_DIMENSION`: Default `384`
 - `CHUNK_SIZE`: Default `500`
