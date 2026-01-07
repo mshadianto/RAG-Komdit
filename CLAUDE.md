@@ -39,7 +39,7 @@ pytest tests/
 ```
 
 ### Deployment (Railway)
-Project is configured for Railway deployment via `railway.json`, `railway.toml`, and `Procfile`.
+Project is configured for Railway deployment via `railway.json` and `nixpacks.toml`. Backend uses Nixpacks builder; frontend uses separate `frontend/railway.toml`.
 
 ## Architecture
 
@@ -68,7 +68,7 @@ Query flow:
   - `GET /statistics/documents`, `GET /statistics/agents`: Analytics
   - `GET /agents`: List available expert agents
 - **database.py**: Supabase client wrapper, handles documents, embeddings, conversations, agent logs
-- **embeddings.py**: Sentence Transformers wrapper (all-MiniLM-L6-v2, 384 dimensions)
+- **embeddings.py**: Sentence Transformers wrapper (all-MiniLM-L6-v2, 384 dimensions). Uses lazy loading - model downloads on first query, not at startup
 - **llm_client.py**: Groq API client (Llama 3.1 70B Versatile)
 - **document_processor.py**: Extracts text from PDF/DOCX/TXT/XLSX, auto-detects category, generates embeddings. Supported formats defined in `SUPPORTED_FORMATS` dict
 
@@ -125,17 +125,20 @@ rag-komdit/
 ├── backend/
 │   ├── main.py                # FastAPI endpoints
 │   ├── database.py            # Supabase client
-│   ├── embeddings.py          # Sentence Transformers
+│   ├── embeddings.py          # Sentence Transformers (lazy loading)
 │   ├── llm_client.py          # Groq API client
 │   └── document_processor.py  # Document parsing
 ├── config/
 │   ├── config.py              # Settings & agent definitions
-│   └── database_schema.sql    # Supabase schema
-├── frontend/app.py            # Streamlit UI
+│   ├── database_schema.sql    # Supabase schema
+│   └── data/                  # uploads/ and processed/ dirs
+├── frontend/
+│   ├── app.py                 # Streamlit UI
+│   └── railway.toml           # Frontend Railway config
 ├── tests/test_embeddings.py   # Embedding tests
-├── data/                      # uploads/ and processed/ dirs
+├── download_model.py          # Pre-download model for Railway build
 ├── requirements.txt
 ├── railway.json               # Railway deployment config
-├── Procfile                   # Process definition
+├── nixpacks.toml              # Nixpacks build config
 └── .env                       # Environment variables
 ```
