@@ -364,10 +364,10 @@ This project is licensed under the MIT License.
 
 ## 👨‍💼 Developer
 
-**Sopian, SE, Ak, M.M., CACP®, CCFA®, QIA®, CA®, GRCP®, GRCA®, CGP®**
+**MS Hadianto, SE, Ak, M.M., CACP®, CCFA®, QIA®, CA®, GRCP®, GRCA®, CGP®**
 
-- Senior Audit Committee Member at BPKH
-- KIM Consulting
+- Audit Committee Member at BPKH
+- EmESHa Consulting
 - HADIANT Platform
 - GitHub: mshadianto
 
