@@ -16,28 +16,23 @@ source venv/bin/activate       # Linux/Mac
 pip install -r requirements.txt
 ```
 
-### Download embedding model (first time only)
-```bash
-python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
-```
-
 ### Run backend
 ```bash
 python -m backend.main
 ```
-Backend runs at http://localhost:8000
+Backend runs at http://localhost:8000. Embedding model downloads lazily on first query.
 
 ### Run frontend
 ```bash
 streamlit run frontend/app.py
 ```
-Frontend runs at http://localhost:8501 (configurable via `API_BASE_URL` env var)
+Frontend runs at http://localhost:8501 (connects to `API_BASE_URL`, default http://localhost:8000)
 
 ### Run tests
 ```bash
-pytest tests/                          # All tests
-pytest tests/test_embeddings.py        # Single test file
-pytest tests/test_embeddings.py -k "test_name"  # Single test function
+pytest tests/                                    # All tests
+pytest tests/test_embeddings.py                  # Single test file
+pytest tests/test_embeddings.py -k "test_name"   # Single test function
 ```
 
 ### Deployment (Railway)
@@ -68,22 +63,18 @@ Query flow:
 - Uses low temperature (0.3) for factual analysis
 
 ### Backend Components (`backend/`)
-- **main.py**: FastAPI app with CORS enabled. Endpoints:
-  - `GET /`, `GET /health`: Health checks
+- **main.py**: FastAPI app with CORS enabled. Key endpoints:
   - `POST /query`: Process query through multi-agent system
   - `POST /upload`: Upload document (background processing)
-  - `GET /documents`, `GET /documents/{id}`, `DELETE /documents/{id}`: Document CRUD
-  - `GET /conversations/{session_id}`: Get chat history
-  - `POST /feedback`: Submit conversation feedback (1-5 rating)
+  - `POST /analyze`: Run financial analysis (returns structured JSON)
+  - `GET /documents`, `DELETE /documents/{id}`: Document CRUD
+  - `GET /conversations/{session_id}`: Chat history
+  - `POST /feedback`: Conversation feedback (1-5 rating)
   - `GET /statistics/documents`, `GET /statistics/agents`: Analytics
-  - `GET /agents`: List available expert agents
-  - `POST /analyze`: Run financial analysis on document (returns structured JSON)
-  - `GET /analyses`: List all analyses (optional `session_id` filter)
-  - `GET /analyses/{document_id}`: Get analyses for specific document
 - **database.py**: Supabase client wrapper, handles documents, embeddings, conversations, agent logs
 - **embeddings.py**: Sentence Transformers wrapper (all-MiniLM-L6-v2, 384 dimensions). Uses lazy loading - model downloads on first query, not at startup
-- **llm_client.py**: Dual-LLM client - GLM/Zhipu AI for routing (glm-4-plus), Groq for responses (Llama 3.3 70B)
-- **document_processor.py**: Extracts text from PDF/DOCX/TXT/XLSX, auto-detects category, generates embeddings. Supported formats defined in `SUPPORTED_FORMATS` dict
+- **llm_client.py**: Dual-LLM client - `GLMClient` for routing (Zhipu AI glm-4-plus), `LLMClient` for responses (Groq Llama 3.3 70B). Global instances: `glm_client`, `llm_client`
+- **document_processor.py**: Extracts text from PDF/DOCX/TXT/XLSX, auto-detects category, generates embeddings. Supported formats in `SUPPORTED_FORMATS` dict
 
 ### Configuration (`config/`)
 - **config.py**: Pydantic settings via `pydantic-settings`. Key exports:
@@ -108,18 +99,12 @@ Session state: `session_id` (UUID), `conversation_history` (list of query/respon
 
 Environment variables in `.env`:
 - `GROQ_API_KEY`: Required for LLM responses
-- `GLM_API_KEY`: Required for query routing (Zhipu AI)
-- `GLM_MODEL`: Default `glm-4-plus`
+- `GLM_API_KEY`: Optional for query routing (falls back to Groq if not set)
 - `SUPABASE_URL`, `SUPABASE_KEY`, `SUPABASE_SERVICE_KEY`: Required for vector store
 - `GROQ_MODEL`: Default `llama-3.3-70b-versatile`
-- `EMBEDDING_MODEL`: Default `sentence-transformers/all-MiniLM-L6-v2`
-- `VECTOR_DIMENSION`: Default `384`
-- `CHUNK_SIZE`: Default `500`
-- `CHUNK_OVERLAP`: Default `50`
-- `AGENT_TEMPERATURE`: Default `0.7`
-- `MAX_TOKENS`: Default `2000`
-- `ENVIRONMENT`: Default `development`
-- `LOG_LEVEL`: Default `INFO`
+- `GLM_MODEL`: Default `glm-4-plus`
+- `CHUNK_SIZE`: Default `500`, `CHUNK_OVERLAP`: Default `50`
+- `AGENT_TEMPERATURE`: Default `0.7`, `MAX_TOKENS`: Default `2000`
 - `API_BASE_URL`: Frontend API target, default `http://localhost:8000`
 
 ## Database Tables (Supabase)
@@ -136,29 +121,12 @@ Views: `document_statistics`, `agent_performance`, `analysis_statistics`
 ## Agent Keys
 When referencing agents in code: `charter_expert`, `planning_expert`, `financial_review_expert`, `regulatory_expert`, `banking_expert`, `reporting_expert`
 
-## File Structure
-```
-rag-komdit/
-├── agents/
-│   ├── orchestrator.py        # Multi-agent system
-│   └── financial_analyst.py   # AI Financial Analyst (McKinsey/Big4 persona)
-├── backend/
-│   ├── main.py                # FastAPI endpoints
-│   ├── database.py            # Supabase client
-│   ├── embeddings.py          # Sentence Transformers (lazy loading)
-│   ├── llm_client.py          # Groq API client
-│   └── document_processor.py  # Document parsing
-├── config/
-│   ├── config.py              # Settings & agent definitions
-│   ├── database_schema.sql    # Supabase schema
-│   └── data/                  # uploads/ and processed/ dirs
-├── frontend/
-│   ├── app.py                 # Streamlit UI
-│   └── railway.toml           # Frontend Railway config
-├── tests/test_embeddings.py   # Embedding tests
-├── download_model.py          # Pre-download model for Railway build
-├── requirements.txt
-├── railway.json               # Railway deployment config
-├── nixpacks.toml              # Nixpacks build config
-└── .env                       # Environment variables
-```
+## Global Instances
+
+Import these for direct access to initialized components:
+- `from agents.orchestrator import orchestrator` - Main query entry point
+- `from agents.financial_analyst import financial_analyst` - Financial analysis
+- `from backend.llm_client import llm_client, glm_client` - LLM clients
+- `from backend.database import db` - Database operations
+- `from backend.embeddings import embedding_manager` - Embeddings
+- `from config.config import settings, AGENT_ROLES, SYSTEM_PROMPTS` - Configuration
