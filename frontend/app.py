@@ -1123,7 +1123,7 @@ with st.sidebar:
 
     st.markdown("<div style='height: 0.75rem;'></div>", unsafe_allow_html=True)
 
-    if st.button("Terminate Session", width="stretch", type="secondary"):
+    if st.button("Terminate Session", use_container_width=True, type="secondary"):
         st.session_state.session_id = str(uuid.uuid4())
         st.session_state.conversation_history = []
         st.session_state.prefilled_query = ""
@@ -1158,7 +1158,7 @@ if selected == "Beranda":
     # CTA Button
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        if st.button("🚀 Mulai Konsultasi", type="primary", width="stretch"):
+        if st.button("🚀 Mulai Konsultasi", type="primary", use_container_width=True):
             st.session_state.prefilled_query = ""
             st.rerun()
 
@@ -1277,7 +1277,7 @@ if selected == "Beranda":
     cols = st.columns(2)
     for idx, example in enumerate(EXAMPLE_QUERIES):
         with cols[idx % 2]:
-            if st.button(f"💬 {example['query']}", key=f"example_{idx}", width="stretch"):
+            if st.button(f"💬 {example['query']}", key=f"example_{idx}", use_container_width=True):
                 st.session_state.prefilled_query = example['query']
                 st.rerun()
 
@@ -1337,9 +1337,9 @@ elif selected == "Konsultasi":
 
     col1, col2, col3 = st.columns([1, 1, 4])
     with col1:
-        submit_button = st.button("Kirim", type="primary", width="stretch")
+        submit_button = st.button("Kirim", type="primary", use_container_width=True)
     with col2:
-        clear_button = st.button("Hapus Riwayat", width="stretch")
+        clear_button = st.button("Hapus Riwayat", use_container_width=True)
 
     if clear_button:
         st.session_state.conversation_history = []
@@ -1590,7 +1590,7 @@ elif selected == "Analisis":
             """, unsafe_allow_html=True)
 
         # Analyze button
-        if st.button("🔍 Mulai Analisis", type="primary", width="stretch"):
+        if st.button("🔍 Mulai Analisis", type="primary", use_container_width=True):
             with st.spinner("Menganalisis dokumen... Ini mungkin memakan waktu beberapa menit."):
                 result = call_api(
                     "analyze",
@@ -1965,7 +1965,7 @@ elif selected == "Analitik":
                     yaxis=dict(gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0')
                 )
                 fig.update_xaxes(tickangle=45)
-                st.plotly_chart(fig, width="stretch")
+                st.plotly_chart(fig, use_container_width=True)
 
             with col2:
                 fig = px.pie(
@@ -1981,7 +1981,7 @@ elif selected == "Analitik":
                     font=dict(family="Inter, sans-serif", color='#B0B0B0'),
                     title_font=dict(size=14, color='#00C6FF'),
                 )
-                st.plotly_chart(fig, width="stretch")
+                st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Belum ada data statistik dokumen.")
 
@@ -2021,7 +2021,7 @@ elif selected == "Analitik":
                 xaxis=dict(gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0'),
                 yaxis=dict(gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0')
             )
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
 
             # Success Rate
             fig = px.bar(
@@ -2044,7 +2044,7 @@ elif selected == "Analitik":
                 yaxis=dict(tickformat='.0%', gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0'),
                 xaxis=dict(gridcolor='rgba(255,255,255,0.1)', color='#B0B0B0')
             )
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Belum ada data performa agen.")
 
