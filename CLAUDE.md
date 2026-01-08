@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Multi-Agent RAG System for Indonesian Audit Committee (Komite Audit) expertise. Uses 6 specialized expert agents to answer questions about audit committee governance, planning, regulatory compliance, and reporting. Built with FastAPI backend, Streamlit frontend, Groq LLM, and Supabase vector store.
+Multi-Agent RAG System for Indonesian Audit Committee (Komite Audit) expertise. Uses 6 specialized expert agents to answer questions about audit committee governance, planning, regulatory compliance, and reporting. Includes AI Financial Analyst with McKinsey/Big4 persona for automated financial document analysis. Built with FastAPI backend, Streamlit frontend, Groq LLM, and Supabase vector store.
 
 ## Commands
 
@@ -59,6 +59,14 @@ Query flow:
 5. Synthesizer combines multi-agent responses (or returns single agent response directly)
 6. Saves conversation and agent logs to database
 
+### Financial Analyst (`agents/financial_analyst.py`)
+- **FinancialAnalyst**: AI Senior Financial Analyst with McKinsey & Big 4 Consulting persona
+- Credentials: CFA Charterholder, CPA, 15+ years experience
+- Specialization: Financial Statement Analysis, Corporate Valuation, Risk Assessment
+- Output format: Structured JSON with executive_summary, financial_ratios, risk_assessment, recommendations
+- Analysis types: `comprehensive`, `quick`, `ratio_only`
+- Uses low temperature (0.3) for factual analysis
+
 ### Backend Components (`backend/`)
 - **main.py**: FastAPI app with CORS enabled. Endpoints:
   - `GET /`, `GET /health`: Health checks
@@ -69,6 +77,9 @@ Query flow:
   - `POST /feedback`: Submit conversation feedback (1-5 rating)
   - `GET /statistics/documents`, `GET /statistics/agents`: Analytics
   - `GET /agents`: List available expert agents
+  - `POST /analyze`: Run financial analysis on document (returns structured JSON)
+  - `GET /analyses`: List all analyses (optional `session_id` filter)
+  - `GET /analyses/{document_id}`: Get analyses for specific document
 - **database.py**: Supabase client wrapper, handles documents, embeddings, conversations, agent logs
 - **embeddings.py**: Sentence Transformers wrapper (all-MiniLM-L6-v2, 384 dimensions). Uses lazy loading - model downloads on first query, not at startup
 - **llm_client.py**: Dual-LLM client - GLM/Zhipu AI for routing (glm-4-plus), Groq for responses (Llama 3.3 70B)
@@ -83,11 +94,13 @@ Query flow:
 - **database_schema.sql**: PostgreSQL schema with pgvector extension. Run in Supabase SQL Editor to initialize
 
 ### Frontend (`frontend/app.py`)
-Streamlit app with 4 pages via `streamlit-option-menu`:
-- **Chat**: Query interface with agent display, conversation history, feedback
-- **Documents**: Upload (PDF/DOCX/TXT/XLSX), list, filter, delete documents
-- **Analytics**: Document stats charts, agent performance metrics via Plotly
-- **About**: System info, health check display
+Streamlit app with 6 pages via `streamlit-option-menu` (Midnight Vault dark theme):
+- **Beranda**: Landing page with system stats, expert agent cards, example queries
+- **Konsultasi**: Query interface with agent display, conversation history, feedback
+- **Dokumen**: Upload (PDF/DOCX/TXT/XLSX), list, filter, delete documents, analyze button
+- **Analisis**: Financial analysis page with McKinsey/Big4 analyst badge, document selector, tabbed results (Executive Summary, Ratios, Risk, Recommendations), analysis history
+- **Analitik**: Document stats charts, agent performance metrics via Plotly
+- **Tentang**: System info, health check display
 
 Session state: `session_id` (UUID), `conversation_history` (list of query/response dicts)
 
@@ -114,10 +127,11 @@ Environment variables in `.env`:
 - `komite_audit_embeddings`: Chunks with 384-dim vector embeddings. Uses HNSW index for fast similarity search
 - `komite_audit_conversations`: Chat history with session_id, agents_used, context_documents, similarity_scores, feedback
 - `agent_logs`: Agent execution metrics (execution_time_ms, tokens_used, status)
+- `financial_analyses`: AI financial analysis results (document_id, session_id, analysis_type, analysis_result JSONB, overall_assessment, risk_level, processing_time_ms)
 
 Key stored procedure: `search_komite_audit_embeddings(query_embedding, match_threshold, match_count, filter_document_ids)`
 
-Views: `document_statistics`, `agent_performance`
+Views: `document_statistics`, `agent_performance`, `analysis_statistics`
 
 ## Agent Keys
 When referencing agents in code: `charter_expert`, `planning_expert`, `financial_review_expert`, `regulatory_expert`, `banking_expert`, `reporting_expert`
@@ -125,7 +139,9 @@ When referencing agents in code: `charter_expert`, `planning_expert`, `financial
 ## File Structure
 ```
 rag-komdit/
-├── agents/orchestrator.py     # Multi-agent system
+├── agents/
+│   ├── orchestrator.py        # Multi-agent system
+│   └── financial_analyst.py   # AI Financial Analyst (McKinsey/Big4 persona)
 ├── backend/
 │   ├── main.py                # FastAPI endpoints
 │   ├── database.py            # Supabase client
