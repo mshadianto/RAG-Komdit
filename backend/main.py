@@ -319,16 +319,6 @@ async def analyze_document(request: AnalysisRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/analyses/{document_id}")
-async def get_analyses_by_document(document_id: str, limit: int = 10):
-    """Get all analyses for a specific document"""
-    try:
-        analyses = await db.get_analyses_by_document(document_id, limit)
-        return {"analyses": analyses}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 @app.get("/analyses")
 async def list_analyses(session_id: Optional[str] = None, limit: int = 50):
     """List all analyses with optional session filter"""
@@ -339,10 +329,20 @@ async def list_analyses(session_id: Optional[str] = None, limit: int = 50):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/analyses/{document_id}")
+async def get_analyses_by_document(document_id: str, limit: int = 10):
+    """Get all analyses for a specific document"""
+    try:
+        analyses = await db.get_analyses_by_document(document_id, limit)
+        return {"analyses": analyses}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "main:app",
+        "backend.main:app",
         host="0.0.0.0",
         port=8000,
         reload=settings.ENVIRONMENT == "development"
