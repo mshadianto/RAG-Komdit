@@ -10,9 +10,8 @@ pydantic-settings
 groq
 zhipuai>=2.1.0
 
-# PyJWT Fix (Sering jadi penyebab utama gagal build belakangan ini)
-pyjwt==2.8.0
-cryptography>=42.0.0
+# PyJWT Fix (zhipuai requires pyjwt>=2.8.0,<2.9.0)
+pyjwt[crypto]==2.8.0
 
 # Database & Vector
 supabase==2.27.1
