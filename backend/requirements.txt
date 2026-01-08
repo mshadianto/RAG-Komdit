@@ -8,11 +8,7 @@ pydantic-settings
 
 # LLM & AI
 groq
-zhipuai>=2.1.0
-
-# PyJWT - let supabase-auth set version (>=2.10.1)
-# zhipuai works with pyjwt>=2.8.0, supabase-auth needs >=2.10.1
-pyjwt[crypto]>=2.10.1
+# zhipuai removed - using direct httpx calls to avoid pyjwt conflict
 
 # Database & Vector
 supabase==2.27.1

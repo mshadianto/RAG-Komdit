@@ -3,7 +3,7 @@ LLM Client for RAG Komite Audit System
 Handles communication with Groq API (responses) and GLM/Zhipu AI (routing)
 """
 from groq import Groq
-from zhipuai import ZhipuAI
+import httpx
 from typing import List, Dict, Optional
 import json
 import logging
@@ -12,6 +12,9 @@ from config.config import settings
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL))
 logger = logging.getLogger(__name__)
 
+# Zhipu AI API endpoint (OpenAI-compatible)
+ZHIPU_API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+
 
 class GLMClient:
     """Client for interacting with Zhipu AI (GLM) API - used for query routing"""
@@ -19,15 +22,15 @@ class GLMClient:
     def __init__(self):
         if not settings.GLM_API_KEY:
             logger.warning("GLM_API_KEY not set, GLM routing will fall back to Groq")
-            self.client = None
+            self.api_key = None
         else:
-            self.client = ZhipuAI(api_key=settings.GLM_API_KEY)
+            self.api_key = settings.GLM_API_KEY
         self.model = settings.GLM_MODEL
         logger.info(f"GLM Client initialized with model: {self.model}")
 
     async def route_query(self, query: str, system_prompt: str) -> Dict:
         """Route query to appropriate agent using GLM"""
-        if not self.client:
+        if not self.api_key:
             logger.warning("GLM client not available, cannot route")
             return {
                 "primary_agent": "charter_expert",
@@ -41,15 +44,25 @@ class GLMClient:
                 {"role": "user", "content": f"Pertanyaan: {query}"}
             ]
 
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=0.3,
-                max_tokens=500,
-                response_format={"type": "json_object"}
-            )
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
 
-            result = response.choices[0].message.content
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": 0.3,
+                "max_tokens": 500,
+                "response_format": {"type": "json_object"}
+            }
+
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(ZHIPU_API_URL, headers=headers, json=payload)
+                response.raise_for_status()
+                data = response.json()
+
+            result = data["choices"][0]["message"]["content"]
             routing_decision = json.loads(result)
             logger.info(f"GLM routed query to: {routing_decision.get('primary_agent')}")
             return routing_decision

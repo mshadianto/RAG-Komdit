@@ -73,7 +73,7 @@ Query flow:
   - `GET /statistics/documents`, `GET /statistics/agents`: Analytics
 - **database.py**: Supabase client wrapper, handles documents, embeddings, conversations, agent logs
 - **embeddings.py**: Sentence Transformers wrapper (all-MiniLM-L6-v2, 384 dimensions). Uses lazy loading - model downloads on first query, not at startup
-- **llm_client.py**: Dual-LLM client - `GLMClient` for routing (Zhipu AI glm-4-plus), `LLMClient` for responses (Groq Llama 3.3 70B). Global instances: `glm_client`, `llm_client`
+- **llm_client.py**: Dual-LLM client - `GLMClient` for routing (Zhipu AI glm-4-plus via httpx), `LLMClient` for responses (Groq Llama 3.3 70B). Global instances: `glm_client`, `llm_client`
 - **document_processor.py**: Extracts text from PDF/DOCX/TXT/XLSX, auto-detects category, generates embeddings. Supported formats in `SUPPORTED_FORMATS` dict
 
 ### Configuration (`config/`)
