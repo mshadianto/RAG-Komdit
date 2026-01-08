@@ -1,6 +1,9 @@
 [build]
 builder = "nixpacks"
 
+[build.args]
+NIXPACKS_PYTHON_REQUIREMENTS_PATH = "frontend/requirements.txt"
+
 [deploy]
 startCommand = "streamlit run frontend/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
 healthcheckPath = "/"
