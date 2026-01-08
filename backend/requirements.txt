@@ -6,14 +6,14 @@ pydantic==2.5.3
 pydantic-settings==2.1.0
 
 # LLM & AI
-groq==0.4.2
-zhipuai==2.1.5
+groq>=0.4.0,<1.0.0
+zhipuai>=2.0.0,<3.0.0
 
 # Vector Store
 supabase==2.27.1
 pgvector==0.2.4
 psycopg2-binary==2.9.9
-websockets==15.0.1
+websockets>=12.0,<16.0
 
 # Document Processing
 PyPDF2==3.0.1
@@ -23,10 +23,10 @@ python-multipart==0.0.6
 
 # Text Processing
 tiktoken==0.5.2
-sentence-transformers==2.2.2
+sentence-transformers>=2.2.0,<3.0.0
 
 # Utilities
 requests==2.31.0
 aiohttp==3.9.1
 python-json-logger==2.0.7
-httpx==0.28.1
+httpx>=0.25.0,<1.0.0
