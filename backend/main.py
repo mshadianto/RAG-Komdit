@@ -14,6 +14,7 @@ from pathlib import Path
 
 from config.config import settings, UPLOAD_DIR
 from agents.orchestrator import orchestrator
+from agents.financial_analyst import financial_analyst
 from backend.document_processor import document_processor
 from backend.database import db
 
@@ -47,6 +48,11 @@ class FeedbackRequest(BaseModel):
 
 class DocumentDeleteRequest(BaseModel):
     document_id: str
+
+class AnalysisRequest(BaseModel):
+    document_id: str
+    session_id: Optional[str] = None
+    analysis_type: str = "comprehensive"  # comprehensive, quick, ratio_only
 
 # Health check endpoint
 @app.get("/")
@@ -252,6 +258,86 @@ async def list_agents():
     """List available expert agents"""
     from config.config import AGENT_ROLES
     return {"agents": AGENT_ROLES}
+
+# Financial Analysis endpoints
+@app.post("/analyze")
+async def analyze_document(request: AnalysisRequest):
+    """
+    Analyze a financial document using AI Senior Financial Analyst
+    Persona: McKinsey & Big 4 Expert
+    """
+    try:
+        # Get document metadata
+        document = await db.get_document(request.document_id)
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        if document.get("status") != "processed":
+            raise HTTPException(
+                status_code=400,
+                detail="Document not yet processed. Please wait for processing to complete."
+            )
+
+        # Reconstruct full document text from chunks
+        document_text = await db.get_document_full_text(request.document_id)
+        if not document_text:
+            raise HTTPException(
+                status_code=404,
+                detail="Document text not found. Document may not have been processed correctly."
+            )
+
+        # Run financial analysis
+        analysis_result, execution_time, tokens_used = await financial_analyst.analyze_document(
+            document_text=document_text,
+            document_metadata=document,
+            analysis_type=request.analysis_type
+        )
+
+        # Save analysis to database
+        saved_analysis = await db.create_analysis(
+            document_id=request.document_id,
+            session_id=request.session_id,
+            analysis_type=request.analysis_type,
+            analysis_result=analysis_result,
+            processing_time_ms=execution_time,
+            tokens_used=tokens_used
+        )
+
+        return {
+            "success": True,
+            "document_id": request.document_id,
+            "document_name": document.get("filename"),
+            "analysis_type": request.analysis_type,
+            "analysis": analysis_result,
+            "processing_time_ms": execution_time,
+            "tokens_used": tokens_used,
+            "analysis_id": saved_analysis.get("id") if saved_analysis else None
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/analyses/{document_id}")
+async def get_analyses_by_document(document_id: str, limit: int = 10):
+    """Get all analyses for a specific document"""
+    try:
+        analyses = await db.get_analyses_by_document(document_id, limit)
+        return {"analyses": analyses}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/analyses")
+async def list_analyses(session_id: Optional[str] = None, limit: int = 50):
+    """List all analyses with optional session filter"""
+    try:
+        analyses = await db.list_analyses(session_id, limit)
+        return {"analyses": analyses}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

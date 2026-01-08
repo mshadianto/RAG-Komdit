@@ -1060,8 +1060,8 @@ with st.sidebar:
     # Navigation Menu - Dark Theme
     selected = option_menu(
         menu_title=None,
-        options=["Beranda", "Konsultasi", "Dokumen", "Analitik", "Tentang"],
-        icons=["house-door", "chat-left-text", "folder2-open", "graph-up-arrow", "info-circle"],
+        options=["Beranda", "Konsultasi", "Dokumen", "Analisis", "Analitik", "Tentang"],
+        icons=["house-door", "chat-left-text", "folder2-open", "file-earmark-bar-graph", "graph-up-arrow", "info-circle"],
         menu_icon="cast",
         default_index=0,
         styles={
@@ -1483,12 +1483,434 @@ elif selected == "Dokumen":
                 with col2:
                     st.markdown(f'<span class="{status_class}">{doc["status"].upper()}</span>', unsafe_allow_html=True)
                     st.write("")
+                    # Analyze button (only for processed documents)
+                    if doc['status'] == 'processed':
+                        if st.button("📊 Analisis", key=f"analyze_{doc['id']}", type="primary"):
+                            st.session_state.analyze_doc_id = doc['id']
+                            st.session_state.analyze_doc_name = doc['filename']
+                            st.info("Navigasi ke halaman Analisis untuk melanjutkan...")
                     if st.button("Hapus", key=f"del_{doc['id']}"):
                         if call_api(f"documents/{doc['id']}", method="DELETE"):
                             st.success("Dokumen berhasil dihapus")
                             st.rerun()
     else:
         st.info("Belum ada dokumen. Unggah dokumen untuk memulai.")
+
+elif selected == "Analisis":
+    st.markdown('<div class="main-header">Analisis Keuangan</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Analisis dokumen keuangan dengan AI Senior Financial Analyst</div>', unsafe_allow_html=True)
+
+    # Analyst Badge
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, rgba(30, 39, 50, 0.9) 0%, rgba(10, 15, 25, 0.95) 100%);
+                border: 1px solid rgba(0, 198, 255, 0.3);
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 60px; height: 60px;
+                        background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
+                        border-radius: 50%;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.5rem;">
+                💼
+            </div>
+            <div>
+                <h3 style="color: #00C6FF; margin: 0; font-size: 1.2rem;">Senior Financial Analyst</h3>
+                <p style="color: #B0B0B0; margin: 0.25rem 0 0 0; font-size: 0.9rem;">
+                    McKinsey & Company · Big 4 Consulting
+                </p>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <span style="background: rgba(0, 198, 255, 0.15); border: 1px solid rgba(0, 198, 255, 0.3);
+                                 padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.7rem; color: #00C6FF;">
+                        CFA Charterholder
+                    </span>
+                    <span style="background: rgba(0, 255, 65, 0.15); border: 1px solid rgba(0, 255, 65, 0.3);
+                                 padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.7rem; color: #00FF41;">
+                        CPA Certified
+                    </span>
+                    <span style="background: rgba(255, 170, 0, 0.15); border: 1px solid rgba(255, 170, 0, 0.3);
+                                 padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.7rem; color: #FFAA00;">
+                        15+ Years Experience
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Analysis Controls
+    st.markdown('<div class="section-header">Pilih Dokumen untuk Dianalisis</div>', unsafe_allow_html=True)
+
+    # Fetch processed documents
+    documents_data = call_api("documents", params={"status": "processed", "limit": 100})
+
+    if documents_data and documents_data.get("documents"):
+        documents = documents_data["documents"]
+
+        # Document selector
+        doc_options = {f"{doc['filename']} ({doc.get('category', 'Uncategorized')})": doc['id'] for doc in documents}
+
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            selected_doc_label = st.selectbox(
+                "Pilih Dokumen",
+                options=list(doc_options.keys()),
+                label_visibility="collapsed"
+            )
+        with col2:
+            analysis_type = st.selectbox(
+                "Jenis Analisis",
+                options=["comprehensive", "quick", "ratio_only"],
+                format_func=lambda x: {
+                    "comprehensive": "📊 Komprehensif",
+                    "quick": "⚡ Cepat",
+                    "ratio_only": "📈 Rasio Saja"
+                }.get(x, x),
+                label_visibility="collapsed"
+            )
+
+        selected_doc_id = doc_options.get(selected_doc_label)
+
+        # Show selected document info
+        selected_doc = next((d for d in documents if d['id'] == selected_doc_id), None)
+        if selected_doc:
+            st.markdown(f"""
+            <div style="background: rgba(0, 198, 255, 0.05);
+                        border: 1px solid rgba(0, 198, 255, 0.15);
+                        border-radius: 8px;
+                        padding: 0.75rem 1rem;
+                        margin: 0.5rem 0 1rem 0;">
+                <span style="color: #6B7280; font-size: 0.8rem;">Dokumen Terpilih:</span>
+                <span style="color: #00C6FF; font-weight: 600; margin-left: 0.5rem;">{selected_doc['filename']}</span>
+                <span style="color: #6B7280; font-size: 0.75rem; margin-left: 1rem;">
+                    {format_bytes(selected_doc['file_size'])} · {selected_doc.get('total_chunks', 0)} chunks
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Analyze button
+        if st.button("🔍 Mulai Analisis", type="primary", use_container_width=True):
+            with st.spinner("Menganalisis dokumen... Ini mungkin memakan waktu beberapa menit."):
+                result = call_api(
+                    "analyze",
+                    method="POST",
+                    timeout=300,  # 5 minutes timeout for analysis
+                    json={
+                        "document_id": selected_doc_id,
+                        "session_id": st.session_state.session_id,
+                        "analysis_type": analysis_type
+                    }
+                )
+
+                if result and result.get("success"):
+                    st.session_state.last_analysis = result
+                    st.success(f"Analisis selesai dalam {result.get('processing_time_ms', 0)/1000:.1f} detik")
+                else:
+                    st.error("Gagal melakukan analisis. Silakan coba lagi.")
+
+        st.markdown("---")
+
+        # Display Analysis Results
+        if 'last_analysis' in st.session_state and st.session_state.last_analysis:
+            analysis = st.session_state.last_analysis.get('analysis', {})
+
+            st.markdown('<div class="section-header">Hasil Analisis</div>', unsafe_allow_html=True)
+
+            # Create tabs for different sections
+            tab1, tab2, tab3, tab4 = st.tabs(["📋 Executive Summary", "📊 Rasio Keuangan", "⚠️ Risk Assessment", "💡 Rekomendasi"])
+
+            with tab1:
+                exec_summary = analysis.get('executive_summary', {})
+
+                # Overall Assessment Badge
+                assessment = exec_summary.get('overall_assessment', 'UNKNOWN')
+                assessment_colors = {
+                    'STRONG': ('#00FF41', 'rgba(0, 255, 65, 0.15)'),
+                    'MODERATE': ('#FFAA00', 'rgba(255, 170, 0, 0.15)'),
+                    'WEAK': ('#FF6B35', 'rgba(255, 107, 53, 0.15)'),
+                    'CRITICAL': ('#FF4141', 'rgba(255, 65, 65, 0.15)'),
+                    'UNKNOWN': ('#6B7280', 'rgba(107, 114, 128, 0.15)')
+                }
+                color, bg_color = assessment_colors.get(assessment, assessment_colors['UNKNOWN'])
+
+                col1, col2 = st.columns([1, 1])
+                with col1:
+                    st.markdown(f"""
+                    <div style="background: {bg_color}; border: 1px solid {color};
+                                border-radius: 10px; padding: 1rem; text-align: center;">
+                        <p style="color: #6B7280; font-size: 0.75rem; margin: 0;">OVERALL ASSESSMENT</p>
+                        <p style="color: {color}; font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0 0;">{assessment}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    confidence = exec_summary.get('confidence_level', 'UNKNOWN')
+                    conf_colors = {'HIGH': '#00FF41', 'MEDIUM': '#FFAA00', 'LOW': '#FF4141'}
+                    conf_color = conf_colors.get(confidence, '#6B7280')
+                    st.markdown(f"""
+                    <div style="background: rgba(30, 39, 50, 0.6); border: 1px solid rgba(0, 198, 255, 0.15);
+                                border-radius: 10px; padding: 1rem; text-align: center;">
+                        <p style="color: #6B7280; font-size: 0.75rem; margin: 0;">CONFIDENCE LEVEL</p>
+                        <p style="color: {conf_color}; font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0 0;">{confidence}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # Overview
+                st.markdown("**📝 Overview**")
+                st.markdown(f"""
+                <div class="response-box">
+                    {exec_summary.get('overview', 'Tidak ada overview tersedia.')}
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Key Findings
+                st.markdown("**🔍 Temuan Utama**")
+                key_findings = exec_summary.get('key_findings', [])
+                for finding in key_findings:
+                    st.markdown(f"- {finding}")
+
+            with tab2:
+                ratios = analysis.get('financial_ratios', {})
+
+                # Profitability
+                st.markdown("**📈 Profitability Ratios**")
+                profitability = ratios.get('profitability', {})
+                if profitability:
+                    cols = st.columns(4)
+                    ratio_items = [('roe', 'ROE'), ('roa', 'ROA'), ('npm', 'NPM'), ('gpm', 'GPM')]
+                    for col, (key, label) in zip(cols, ratio_items):
+                        with col:
+                            ratio_data = profitability.get(key, {})
+                            value = ratio_data.get('value', 'N/A')
+                            trend = ratio_data.get('trend', '')
+                            trend_icon = {'UP': '📈', 'DOWN': '📉', 'STABLE': '➡️'}.get(trend, '')
+                            st.metric(label, value, trend_icon)
+                else:
+                    st.info("Data profitability tidak tersedia")
+
+                st.markdown("---")
+
+                # Liquidity
+                st.markdown("**💧 Liquidity Ratios**")
+                liquidity = ratios.get('liquidity', {})
+                if liquidity:
+                    cols = st.columns(3)
+                    ratio_items = [('current_ratio', 'Current Ratio'), ('quick_ratio', 'Quick Ratio'), ('cash_ratio', 'Cash Ratio')]
+                    for col, (key, label) in zip(cols, ratio_items):
+                        with col:
+                            ratio_data = liquidity.get(key, {})
+                            value = ratio_data.get('value', 'N/A')
+                            st.metric(label, value)
+                else:
+                    st.info("Data liquidity tidak tersedia")
+
+                st.markdown("---")
+
+                # Solvency
+                st.markdown("**🏦 Solvency Ratios**")
+                solvency = ratios.get('solvency', {})
+                if solvency:
+                    cols = st.columns(3)
+                    ratio_items = [('debt_to_equity', 'D/E Ratio'), ('debt_to_assets', 'D/A Ratio'), ('interest_coverage', 'Interest Coverage')]
+                    for col, (key, label) in zip(cols, ratio_items):
+                        with col:
+                            ratio_data = solvency.get(key, {})
+                            value = ratio_data.get('value', 'N/A')
+                            st.metric(label, value)
+                else:
+                    st.info("Data solvency tidak tersedia")
+
+                st.markdown("---")
+
+                # Efficiency
+                st.markdown("**⚙️ Efficiency Ratios**")
+                efficiency = ratios.get('efficiency', {})
+                if efficiency:
+                    cols = st.columns(3)
+                    ratio_items = [('asset_turnover', 'Asset Turnover'), ('inventory_turnover', 'Inventory Turnover'), ('receivable_days', 'Receivable Days')]
+                    for col, (key, label) in zip(cols, ratio_items):
+                        with col:
+                            ratio_data = efficiency.get(key, {})
+                            value = ratio_data.get('value', 'N/A')
+                            st.metric(label, value)
+                else:
+                    st.info("Data efficiency tidak tersedia")
+
+            with tab3:
+                risk = analysis.get('risk_assessment', {})
+
+                # Overall Risk Level
+                risk_level = risk.get('overall_risk_level', 'UNKNOWN')
+                risk_colors = {
+                    'LOW': ('#00FF41', 'rgba(0, 255, 65, 0.15)'),
+                    'MEDIUM': ('#FFAA00', 'rgba(255, 170, 0, 0.15)'),
+                    'HIGH': ('#FF6B35', 'rgba(255, 107, 53, 0.15)'),
+                    'CRITICAL': ('#FF4141', 'rgba(255, 65, 65, 0.15)'),
+                    'UNKNOWN': ('#6B7280', 'rgba(107, 114, 128, 0.15)')
+                }
+                r_color, r_bg = risk_colors.get(risk_level, risk_colors['UNKNOWN'])
+
+                st.markdown(f"""
+                <div style="background: {r_bg}; border: 1px solid {r_color};
+                            border-radius: 10px; padding: 1rem; text-align: center; margin-bottom: 1.5rem;">
+                    <p style="color: #6B7280; font-size: 0.75rem; margin: 0;">OVERALL RISK LEVEL</p>
+                    <p style="color: {r_color}; font-size: 2rem; font-weight: 700; margin: 0.5rem 0 0 0;">{risk_level}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Red Flags
+                st.markdown("**🚩 Red Flags**")
+                red_flags = risk.get('red_flags', [])
+                if red_flags:
+                    for flag in red_flags:
+                        severity = flag.get('severity', 'MEDIUM')
+                        sev_colors = {'LOW': '#FFAA00', 'MEDIUM': '#FF6B35', 'HIGH': '#FF4141', 'CRITICAL': '#FF0000'}
+                        sev_color = sev_colors.get(severity, '#FF6B35')
+
+                        st.markdown(f"""
+                        <div style="background: rgba(255, 65, 65, 0.1);
+                                    border-left: 3px solid {sev_color};
+                                    border-radius: 0 8px 8px 0;
+                                    padding: 1rem;
+                                    margin: 0.5rem 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: #FFFFFF; font-weight: 600;">{flag.get('category', 'Unknown')}</span>
+                                <span style="background: {sev_color}; color: white; padding: 0.2rem 0.5rem;
+                                             border-radius: 4px; font-size: 0.7rem;">{severity}</span>
+                            </div>
+                            <p style="color: #B0B0B0; margin: 0.5rem 0;">{flag.get('description', '')}</p>
+                            <p style="color: #00C6FF; font-size: 0.85rem; margin: 0;">
+                                💡 {flag.get('recommendation', '')}
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.success("Tidak ada red flags teridentifikasi")
+
+                st.markdown("---")
+
+                # Positive Indicators
+                st.markdown("**✅ Indikator Positif**")
+                positives = risk.get('positive_indicators', [])
+                if positives:
+                    for pos in positives:
+                        st.markdown(f"- ✅ {pos}")
+                else:
+                    st.info("Tidak ada indikator positif teridentifikasi")
+
+                # Areas of Concern
+                st.markdown("**⚠️ Area Perhatian**")
+                concerns = risk.get('areas_of_concern', [])
+                if concerns:
+                    for concern in concerns:
+                        st.markdown(f"- ⚠️ {concern}")
+                else:
+                    st.info("Tidak ada area perhatian khusus")
+
+            with tab4:
+                recs = analysis.get('recommendations', {})
+
+                # Immediate Actions
+                st.markdown("**🚨 Tindakan Segera**")
+                immediate = recs.get('immediate_actions', [])
+                if immediate:
+                    for action in immediate:
+                        st.markdown(f"""
+                        <div style="background: rgba(255, 65, 65, 0.1);
+                                    border-left: 3px solid #FF4141;
+                                    padding: 0.75rem 1rem;
+                                    border-radius: 0 8px 8px 0;
+                                    margin: 0.25rem 0;">
+                            <span style="color: #E0E0E0;">🔴 {action}</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("Tidak ada tindakan segera yang diperlukan")
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # Short Term
+                st.markdown("**📅 Jangka Pendek (1-6 Bulan)**")
+                short_term = recs.get('short_term', [])
+                if short_term:
+                    for action in short_term:
+                        st.markdown(f"- 🟡 {action}")
+                else:
+                    st.info("Tidak ada rekomendasi jangka pendek")
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # Long Term
+                st.markdown("**📆 Jangka Panjang (6-12 Bulan)**")
+                long_term = recs.get('long_term', [])
+                if long_term:
+                    for action in long_term:
+                        st.markdown(f"- 🟢 {action}")
+                else:
+                    st.info("Tidak ada rekomendasi jangka panjang")
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # For Audit Committee
+                st.markdown("**🏛️ Rekomendasi untuk Komite Audit**")
+                audit_recs = recs.get('for_audit_committee', [])
+                if audit_recs:
+                    st.markdown("""
+                    <div style="background: rgba(0, 114, 255, 0.1);
+                                border: 1px solid rgba(0, 114, 255, 0.3);
+                                border-radius: 10px;
+                                padding: 1rem;">
+                    """, unsafe_allow_html=True)
+                    for action in audit_recs:
+                        st.markdown(f"- 📌 {action}")
+                    st.markdown("</div>", unsafe_allow_html=True)
+                else:
+                    st.info("Tidak ada rekomendasi khusus untuk Komite Audit")
+
+            # Download JSON
+            st.markdown("---")
+            import json
+            analysis_json = json.dumps(analysis, indent=2, ensure_ascii=False)
+            st.download_button(
+                label="📥 Download Hasil Analisis (JSON)",
+                data=analysis_json,
+                file_name=f"analysis_{st.session_state.last_analysis.get('document_name', 'document')}.json",
+                mime="application/json"
+            )
+
+    else:
+        st.info("Belum ada dokumen yang diproses. Unggah dokumen terlebih dahulu di halaman Dokumen.")
+
+    # Analysis History Section
+    st.markdown("---")
+    st.markdown('<div class="section-header">Riwayat Analisis</div>', unsafe_allow_html=True)
+
+    history_data = call_api("analyses", params={"limit": 10})
+    if history_data and history_data.get("analyses"):
+        analyses = history_data["analyses"]
+        for analysis_item in analyses:
+            doc_info = analysis_item.get('komite_audit_documents', {})
+            result = analysis_item.get('analysis_result', {})
+            exec_summary = result.get('executive_summary', {})
+            assessment = exec_summary.get('overall_assessment', 'UNKNOWN')
+
+            assessment_colors = {
+                'STRONG': '#00FF41', 'MODERATE': '#FFAA00',
+                'WEAK': '#FF6B35', 'CRITICAL': '#FF4141', 'UNKNOWN': '#6B7280'
+            }
+            a_color = assessment_colors.get(assessment, '#6B7280')
+
+            with st.expander(f"📄 {doc_info.get('filename', 'Unknown')} - {analysis_item.get('analysis_type', '')}"):
+                st.markdown(f"""
+                **Assessment:** <span style="color: {a_color};">{assessment}</span><br>
+                **Risk Level:** {analysis_item.get('risk_level', 'N/A')}<br>
+                **Waktu Proses:** {analysis_item.get('processing_time_ms', 0)/1000:.1f}s<br>
+                **Tanggal:** {analysis_item.get('created_at', '')[:10]}
+                """, unsafe_allow_html=True)
+    else:
+        st.info("Belum ada riwayat analisis.")
 
 elif selected == "Analitik":
     st.markdown('<div class="main-header">Dashboard Analitik</div>', unsafe_allow_html=True)

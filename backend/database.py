@@ -292,5 +292,96 @@ class DatabaseManager:
             logger.error(f"Error getting agent performance: {str(e)}")
             return []
 
+    # Financial Analysis Methods
+    async def get_document_full_text(self, document_id: str) -> Optional[str]:
+        """Reconstruct full document text from embeddings chunks"""
+        try:
+            response = self.client.table(settings.EMBEDDINGS_TABLE)\
+                .select("content, chunk_index")\
+                .eq("document_id", document_id)\
+                .order("chunk_index")\
+                .execute()
+
+            if not response.data:
+                return None
+
+            # Reconstruct text from ordered chunks
+            chunks = sorted(response.data, key=lambda x: x["chunk_index"])
+            full_text = "\n\n".join([chunk["content"] for chunk in chunks])
+
+            logger.info(f"Retrieved {len(chunks)} chunks for document {document_id}")
+            return full_text
+
+        except Exception as e:
+            logger.error(f"Error getting document full text: {str(e)}")
+            return None
+
+    async def create_analysis(
+        self,
+        document_id: str,
+        session_id: Optional[str],
+        analysis_type: str,
+        analysis_result: Dict,
+        processing_time_ms: int,
+        tokens_used: int = None
+    ) -> Optional[Dict]:
+        """Save financial analysis to database"""
+        try:
+            data = {
+                "document_id": document_id,
+                "session_id": session_id,
+                "analysis_type": analysis_type,
+                "analysis_result": analysis_result,
+                "processing_time_ms": processing_time_ms,
+                "tokens_used": tokens_used,
+                "overall_assessment": analysis_result.get("executive_summary", {}).get("overall_assessment"),
+                "risk_level": analysis_result.get("risk_assessment", {}).get("overall_risk_level")
+            }
+
+            response = self.client.table("financial_analyses").insert(data).execute()
+            logger.info(f"Analysis saved for document: {document_id}")
+            return response.data[0] if response.data else None
+
+        except Exception as e:
+            logger.error(f"Error saving analysis: {str(e)}")
+            return None
+
+    async def get_analyses_by_document(
+        self,
+        document_id: str,
+        limit: int = 10
+    ) -> List[Dict]:
+        """Get analyses for a specific document"""
+        try:
+            response = self.client.table("financial_analyses")\
+                .select("*, komite_audit_documents(filename, category)")\
+                .eq("document_id", document_id)\
+                .order("created_at", desc=True)\
+                .limit(limit)\
+                .execute()
+            return response.data or []
+        except Exception as e:
+            logger.error(f"Error getting analyses: {str(e)}")
+            return []
+
+    async def list_analyses(
+        self,
+        session_id: Optional[str] = None,
+        limit: int = 50
+    ) -> List[Dict]:
+        """List all analyses with optional session filter"""
+        try:
+            query = self.client.table("financial_analyses")\
+                .select("*, komite_audit_documents(filename, category)")
+
+            if session_id:
+                query = query.eq("session_id", session_id)
+
+            response = query.order("created_at", desc=True).limit(limit).execute()
+            return response.data or []
+        except Exception as e:
+            logger.error(f"Error listing analyses: {str(e)}")
+            return []
+
 # Global database manager instance
 db = DatabaseManager()

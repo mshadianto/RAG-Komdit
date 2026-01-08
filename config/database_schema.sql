@@ -170,3 +170,39 @@ COMMENT ON TABLE komite_audit_documents IS 'Stores metadata for uploaded documen
 COMMENT ON TABLE komite_audit_embeddings IS 'Stores document chunks and their vector embeddings';
 COMMENT ON TABLE komite_audit_conversations IS 'Stores conversation history and query logs';
 COMMENT ON TABLE agent_logs IS 'Stores agent execution logs for monitoring';
+
+-- Financial Analyses table - stores AI financial analysis results
+CREATE TABLE IF NOT EXISTS financial_analyses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id UUID REFERENCES komite_audit_documents(id) ON DELETE CASCADE,
+    session_id VARCHAR(100),
+    analysis_type VARCHAR(50) DEFAULT 'comprehensive',
+    analysis_result JSONB NOT NULL,
+    overall_assessment VARCHAR(50),  -- STRONG/MODERATE/WEAK/CRITICAL
+    risk_level VARCHAR(50),          -- LOW/MEDIUM/HIGH/CRITICAL
+    processing_time_ms INTEGER,
+    tokens_used INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for financial analyses
+CREATE INDEX IF NOT EXISTS idx_analyses_document_id ON financial_analyses(document_id);
+CREATE INDEX IF NOT EXISTS idx_analyses_session_id ON financial_analyses(session_id);
+CREATE INDEX IF NOT EXISTS idx_analyses_created_at ON financial_analyses(created_at);
+CREATE INDEX IF NOT EXISTS idx_analyses_assessment ON financial_analyses(overall_assessment);
+CREATE INDEX IF NOT EXISTS idx_analyses_risk ON financial_analyses(risk_level);
+
+-- View for analysis statistics
+CREATE OR REPLACE VIEW analysis_statistics AS
+SELECT
+    d.category,
+    COUNT(DISTINCT a.id) as total_analyses,
+    COUNT(DISTINCT a.document_id) as documents_analyzed,
+    AVG(a.processing_time_ms) as avg_processing_time,
+    MODE() WITHIN GROUP (ORDER BY a.overall_assessment) as most_common_assessment,
+    MODE() WITHIN GROUP (ORDER BY a.risk_level) as most_common_risk_level
+FROM financial_analyses a
+JOIN komite_audit_documents d ON a.document_id = d.id
+GROUP BY d.category;
+
+COMMENT ON TABLE financial_analyses IS 'Stores financial analysis results from AI Senior Financial Analyst';
