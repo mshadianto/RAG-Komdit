@@ -1,5 +1,6 @@
-# Frontend-only dependencies (minimal for fast builds)
+# Frontend-only dependencies (minimal for fast Railway builds)
 streamlit>=1.29.0
 plotly>=5.18.0
 streamlit-option-menu>=0.3.6
 requests>=2.31.0
+python-dotenv>=1.0.0
