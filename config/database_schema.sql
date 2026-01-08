@@ -90,7 +90,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger for documents table
+-- Create trigger for documents table (drop first if exists)
+DROP TRIGGER IF EXISTS update_documents_updated_at ON komite_audit_documents;
 CREATE TRIGGER update_documents_updated_at
     BEFORE UPDATE ON komite_audit_documents
     FOR EACH ROW
