@@ -4,6 +4,10 @@ FROM python:3.10-slim
 # Set working directory
 WORKDIR /app
 
+# Set Python path early
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -19,13 +23,16 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY backend/ ./backend/
+COPY agents/ ./agents/
+COPY config/ ./config/
+COPY frontend/ ./frontend/
 
-# Set Python path
-ENV PYTHONPATH=/app
+# Verify files are copied
+RUN ls -la /app && ls -la /app/backend
 
 # Expose port
 EXPOSE 8000
 
-# Start command (Railway sets PORT env var)
-CMD uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Start command
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
