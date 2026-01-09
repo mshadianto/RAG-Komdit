@@ -1,5 +1,8 @@
-# Use Python slim image - v2
+# Use Python slim image
 FROM python:3.10-slim
+
+# Cache buster - change this to force rebuild
+ARG CACHE_BUST=20260109v3
 
 # Set working directory
 WORKDIR /app
