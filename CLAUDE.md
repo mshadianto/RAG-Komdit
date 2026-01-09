@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Multi-Agent RAG System for Indonesian Audit Committee (Komite Audit) expertise. Uses 6 specialized expert agents to answer questions about audit committee governance, planning, regulatory compliance, and reporting. Includes AI Financial Analyst with McKinsey/Big4 persona for automated financial document analysis. Built with FastAPI backend, Streamlit frontend, Groq LLM, and Supabase vector store.
+Multi-Agent RAG System for Indonesian Audit Committee (Komite Audit) expertise. Uses 6 specialized expert agents to answer questions about audit committee governance, planning, regulatory compliance, and reporting. Includes AI Financial Analyst with McKinsey/Big4 persona for automated financial document analysis. Built with FastAPI backend, Streamlit frontend, dual-LLM architecture (Groq for responses, GLM for routing), and Supabase vector store with pgvector.
+
+**Language**: Indonesian (prompts, responses, and UI are in Bahasa Indonesia)
 
 ## Commands
 
@@ -38,6 +40,11 @@ pytest tests/test_embeddings.py -k "test_name"   # Single test function
 ### Deployment (Railway)
 Project is configured for Railway deployment via `railway.json` and `nixpacks.toml`. Backend uses Nixpacks builder; frontend uses separate `frontend/railway.toml`.
 
+### Pre-download embedding model (optional)
+```bash
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"
+```
+
 ## Architecture
 
 ### Multi-Agent System (`agents/orchestrator.py`)
@@ -47,7 +54,7 @@ Project is configured for Railway deployment via `railway.json` and `nixpacks.to
 - **ResponseSynthesizer**: Combines responses from multiple agents into coherent answer
 
 Query flow:
-1. Router analyzes query using GLM (glm-4-plus) and selects primary/secondary agents (max controlled by `max_agents` param). Falls back to Groq if GLM not configured.
+1. Router analyzes query using GLM (glm-4-plus) and selects primary/secondary agents (max controlled by `max_agents` param). Falls back to Groq if `GLM_API_KEY` not set.
 2. Orchestrator retrieves relevant context via `similarity_search()` (default threshold: 0.7, top_k: 5)
 3. Gets conversation history for session context (last 5 messages)
 4. Selected agents process query with context in sequence
@@ -81,7 +88,7 @@ Query flow:
   - `settings`: Settings singleton with all env vars
   - `AGENT_ROLES`: Dict defining 6 expert agents with name, description, expertise list
   - `SYSTEM_PROMPTS`: Prompts for `query_router` and `synthesizer`
-  - `UPLOAD_DIR`, `PROCESSED_DIR`: Path objects for file storage
+  - `UPLOAD_DIR`, `PROCESSED_DIR`: Path objects under `config/data/` for file storage (auto-created)
 - **database_schema.sql**: PostgreSQL schema with pgvector extension. Run in Supabase SQL Editor to initialize
 
 ### Frontend (`frontend/app.py`)
@@ -120,6 +127,19 @@ Views: `document_statistics`, `agent_performance`, `analysis_statistics`
 
 ## Agent Keys
 When referencing agents in code: `charter_expert`, `planning_expert`, `financial_review_expert`, `regulatory_expert`, `banking_expert`, `reporting_expert`
+
+## Important Patterns
+
+### Async Pattern
+All database operations and LLM calls are async. Use `await` when calling:
+- `db.similarity_search()`, `db.create_conversation()`, `db.get_document()`, etc.
+- `llm_client.generate_completion()`, `llm_client.generate_with_context()`
+- `orchestrator.process_query()`, `financial_analyst.analyze_document()`
+
+### Error Handling
+- LLM routing failures fall back to `charter_expert` as default agent
+- Query processing returns `{"success": False, "error": ...}` on failure
+- Financial analysis returns a fallback JSON structure with `"error"` field on failure
 
 ## Global Instances
 
