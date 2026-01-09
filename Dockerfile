@@ -22,14 +22,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy only backend-related code (not frontend)
 COPY backend/ ./backend/
 COPY agents/ ./agents/
 COPY config/ ./config/
-COPY frontend/ ./frontend/
-
-# Verify files are copied
-RUN ls -la /app && ls -la /app/backend
 
 # Expose port
 EXPOSE 8000
