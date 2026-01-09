@@ -1,0 +1,31 @@
+# Ignore for Docker build
+.git
+.gitignore
+.env
+.env.*
+*.md
+README*
+LICENSE
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+.claude/
+
+# Frontend (separate deployment)
+frontend/
+
+# Logs and data
+logs/
+*.log
+config/data/
+
+# Tests
+tests/
