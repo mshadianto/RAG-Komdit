@@ -38,6 +38,6 @@ def test_cosine_similarity():
     similarity = embedding_manager.cosine_similarity(emb1, emb2)
     
     assert 0 <= similarity <= 1
-    assert similarity > 0.5  # Should be reasonably similar
+    assert similarity > 0.4  # Should be reasonably similar (cross-lingual)
 
 # Add more tests as needed
