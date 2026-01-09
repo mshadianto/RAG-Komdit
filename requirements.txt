@@ -1,0 +1,31 @@
+# Backend requirements for Railway deployment
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic>=2.11.7
+pydantic-settings
+
+# LLM & AI
+groq
+
+# Database & Vector
+supabase==2.27.1
+pgvector
+psycopg2-binary
+websockets
+
+# Document Processing
+PyPDF2
+python-docx
+openpyxl
+python-multipart
+
+# Text Processing
+tiktoken
+sentence-transformers
+
+# Utilities
+requests
+aiohttp
+python-json-logger
+httpx
