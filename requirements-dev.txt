@@ -16,7 +16,7 @@ pydantic-settings>=2.1.0
 
 # === LLM & AI ===
 groq>=1.0.0
-zhipuai>=2.0.0
+# zhipuai removed - using direct httpx calls to Zhipu API
 
 # === Vector Store ===
 supabase>=2.27.1
