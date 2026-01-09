@@ -264,7 +264,6 @@ async def list_agents():
 async def analyze_document(request: AnalysisRequest):
     """
     Analyze a financial document using AI Senior Financial Analyst
-    Persona: McKinsey & Big 4 Expert
     """
     try:
         # Get document metadata

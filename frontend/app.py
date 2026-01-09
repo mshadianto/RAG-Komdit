@@ -1,6 +1,6 @@
 """
 Streamlit Frontend for RAG Komite Audit System
-Professional minimalist interface - McKinsey style
+Professional minimalist interface
 """
 import streamlit as st
 import requests
@@ -1518,7 +1518,7 @@ elif selected == "Analisis":
             <div>
                 <h3 style="color: #00C6FF; margin: 0; font-size: 1.2rem;">Senior Financial Analyst</h3>
                 <p style="color: #B0B0B0; margin: 0.25rem 0 0 0; font-size: 0.9rem;">
-                    McKinsey & Company · Big 4 Consulting
+                    Expert Financial Consultant
                 </p>
                 <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                     <span style="background: rgba(0, 198, 255, 0.15); border: 1px solid rgba(0, 198, 255, 0.3);

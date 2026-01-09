@@ -1,6 +1,6 @@
 """
 Financial Analyst Agent for RAG Komite Audit System
-Senior Expert from McKinsey & Big 4 Consulting
+Senior Expert Financial Analyst
 """
 import time
 import json
@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-FINANCIAL_ANALYST_PERSONA = """Anda adalah **Senior Expert Financial Analyst** dengan pengalaman 15+ tahun di **McKinsey & Company** dan **Big 4 Consulting Firms** (Deloitte, PwC, EY, KPMG).
+FINANCIAL_ANALYST_PERSONA = """Anda adalah **Senior Expert Financial Analyst** dengan pengalaman 15+ tahun di bidang konsultansi keuangan dan audit.
 
 ## Profil Keahlian Anda:
 - CFA Charterholder & Certified Public Accountant (CPA)
@@ -102,7 +102,6 @@ Analisis dokumen keuangan berikut dan berikan laporan analisis komprehensif.
 class FinancialAnalyst:
     """
     Senior Financial Analyst Agent
-    Persona: McKinsey & Big 4 Expert
     """
 
     def __init__(self):
