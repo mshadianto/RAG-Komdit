@@ -86,7 +86,7 @@ class QueryRouter:
 
     def __init__(self):
         self.system_prompt = SYSTEM_PROMPTS["query_router"]
-        self.use_glm = glm_client.client is not None
+        self.use_glm = glm_client.api_key is not None
         logger.info(f"Query Router initialized (using {'GLM' if self.use_glm else 'Groq'} for routing)")
 
     async def route(self, query: str) -> Dict:
