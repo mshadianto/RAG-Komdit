@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Multi-Agent RAG System for Indonesian Audit Committee (Komite Audit) expertise. Uses 6 specialized expert agents to answer questions about audit committee governance, planning, regulatory compliance, and reporting. Includes AI Financial Analyst with McKinsey/Big4 persona for automated financial document analysis. Built with FastAPI backend, Streamlit frontend, dual-LLM architecture (Groq for responses, GLM for routing), and Supabase vector store with pgvector.
+Multi-Agent RAG System for Indonesian Audit Committee (Komite Audit) expertise. Uses 7 specialized expert agents to answer questions about audit committee governance, planning, regulatory compliance, reporting, and ESG/sustainability. Includes AI Financial Analyst (CFA/CPA Senior Analyst persona) for automated financial document analysis. Built with FastAPI backend, Streamlit frontend, dual-LLM architecture (Groq for responses, GLM for routing), and Supabase vector store with pgvector.
 
 **Language**: Indonesian (prompts, responses, and UI are in Bahasa Indonesia)
 
@@ -38,7 +38,7 @@ pytest tests/test_embeddings.py -k "test_name"   # Single test function
 ```
 
 ### Deployment (Railway)
-Project is configured for Railway deployment via `railway.json` and `nixpacks.toml`. Backend uses Nixpacks builder; frontend uses separate `frontend/railway.toml`.
+Project is configured for Railway deployment. Backend uses `railway.json` with Dockerfile builder; frontend uses separate `frontend/railway.toml` with Nixpacks builder.
 
 ### Pre-download embedding model (optional)
 ```bash
@@ -50,7 +50,7 @@ python -c "from sentence_transformers import SentenceTransformer; SentenceTransf
 ### Multi-Agent System (`agents/orchestrator.py`)
 - **AgentOrchestrator**: Main entry point that coordinates the query pipeline. Global instance: `orchestrator`
 - **QueryRouter**: Uses LLM to route queries to appropriate expert agent(s). Returns JSON with `primary_agent`, `secondary_agents`, `reasoning`
-- **ExpertAgent**: Base class for 6 specialized agents. Builds Indonesian system prompts from `AGENT_ROLES` config
+- **ExpertAgent**: Base class for 7 specialized agents. Builds Indonesian system prompts from `AGENT_ROLES` config
 - **ResponseSynthesizer**: Combines responses from multiple agents into coherent answer
 
 Query flow:
@@ -62,22 +62,24 @@ Query flow:
 6. Saves conversation and agent logs to database
 
 ### Financial Analyst (`agents/financial_analyst.py`)
-- **FinancialAnalyst**: AI Senior Financial Analyst with McKinsey & Big 4 Consulting persona
-- Credentials: CFA Charterholder, CPA, 15+ years experience
-- Specialization: Financial Statement Analysis, Corporate Valuation, Risk Assessment
-- Output format: Structured JSON with executive_summary, financial_ratios, risk_assessment, recommendations
+- **FinancialAnalyst**: AI Senior Financial Analyst persona
+- Credentials: CFA Charterholder, CPA, 15+ years experience in Indonesian banking/public companies
+- Specialization: Financial Statement Analysis, Corporate Valuation, Risk Assessment, PSAK/IFRS/OJK regulations
+- Output format: Structured JSON with executive_summary, financial_ratios, risk_assessment, recommendations, data_quality_notes
 - Analysis types: `comprehensive`, `quick`, `ratio_only`
-- Uses low temperature (0.3) for factual analysis
+- Uses low temperature (0.3) for factual analysis, max 4000 tokens
 
 ### Backend Components (`backend/`)
 - **main.py**: FastAPI app with CORS enabled. Key endpoints:
   - `POST /query`: Process query through multi-agent system
   - `POST /upload`: Upload document (background processing)
   - `POST /analyze`: Run financial analysis (returns structured JSON)
-  - `GET /documents`, `DELETE /documents/{id}`: Document CRUD
+  - `GET /analyses`, `GET /analyses/{document_id}`: Financial analysis history
+  - `GET /documents`, `GET /documents/{id}`, `DELETE /documents/{id}`: Document CRUD
   - `GET /conversations/{session_id}`: Chat history
   - `POST /feedback`: Conversation feedback (1-5 rating)
   - `GET /statistics/documents`, `GET /statistics/agents`: Analytics
+  - `GET /agents`: List all expert agents
 - **database.py**: Supabase client wrapper, handles documents, embeddings, conversations, agent logs
 - **embeddings.py**: Sentence Transformers wrapper (all-MiniLM-L6-v2, 384 dimensions). Uses lazy loading - model downloads on first query, not at startup
 - **llm_client.py**: Dual-LLM client - `GLMClient` for routing (Zhipu AI glm-4-plus via httpx), `LLMClient` for responses (Groq Llama 3.3 70B). Global instances: `glm_client`, `llm_client`
@@ -86,7 +88,7 @@ Query flow:
 ### Configuration (`config/`)
 - **config.py**: Pydantic settings via `pydantic-settings`. Key exports:
   - `settings`: Settings singleton with all env vars
-  - `AGENT_ROLES`: Dict defining 6 expert agents with name, description, expertise list
+  - `AGENT_ROLES`: Dict defining 7 expert agents with name, description, expertise list
   - `SYSTEM_PROMPTS`: Prompts for `query_router` and `synthesizer`
   - `UPLOAD_DIR`, `PROCESSED_DIR`: Path objects under `config/data/` for file storage (auto-created)
 - **database_schema.sql**: PostgreSQL schema with pgvector extension. Run in Supabase SQL Editor to initialize
@@ -112,6 +114,8 @@ Environment variables in `.env`:
 - `GLM_MODEL`: Default `glm-4-plus`
 - `CHUNK_SIZE`: Default `500`, `CHUNK_OVERLAP`: Default `50`
 - `AGENT_TEMPERATURE`: Default `0.7`, `MAX_TOKENS`: Default `2000`
+- `ENVIRONMENT`: Default `development` (controls uvicorn reload)
+- `LOG_LEVEL`: Default `INFO`
 - `API_BASE_URL`: Frontend API target, default `http://localhost:8000`
 
 ## Database Tables (Supabase)
@@ -126,7 +130,7 @@ Key stored procedure: `search_komite_audit_embeddings(query_embedding, match_thr
 Views: `document_statistics`, `agent_performance`, `analysis_statistics`
 
 ## Agent Keys
-When referencing agents in code: `charter_expert`, `planning_expert`, `financial_review_expert`, `regulatory_expert`, `banking_expert`, `reporting_expert`
+When referencing agents in code: `charter_expert`, `planning_expert`, `financial_review_expert`, `regulatory_expert`, `banking_expert`, `reporting_expert`, `esg_expert`
 
 ## Important Patterns
 
