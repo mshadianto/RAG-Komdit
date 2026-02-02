@@ -4,8 +4,8 @@ nixPkgs = ["python310"]
 [phases.install]
 cmds = [
     "python -m venv --copies /opt/venv",
-    ". /opt/venv/bin/activate && pip install -r frontend/requirements.txt"
+    ". /opt/venv/bin/activate && pip install -r requirements.txt"
 ]
 
 [start]
-cmd = "streamlit run frontend/app.py --server.port ${PORT:-8501} --server.address 0.0.0.0 --server.headless true"
+cmd = "streamlit run app.py --server.port ${PORT:-8501} --server.address 0.0.0.0 --server.headless true"

@@ -2,10 +2,10 @@
 builder = "nixpacks"
 
 [build.args]
-NIXPACKS_PYTHON_REQUIREMENTS_PATH = "frontend/requirements.txt"
+NIXPACKS_PYTHON_REQUIREMENTS_PATH = "requirements.txt"
 
 [deploy]
-startCommand = "streamlit run frontend/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
+startCommand = "streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
 healthcheckPath = "/"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure"
