@@ -1030,6 +1030,13 @@ AGENT_INFO = {
         "title": "Reporting & Disclosure",
         "desc": "Ahli pelaporan dan pengungkapan kegiatan Komite Audit",
         "expertise": ["Laporan Periodik", "Annual Report Disclosure", "Stakeholder Communication"]
+    },
+    "esg_expert": {
+        "icon": "🌱",
+        "name": "ESG Expert",
+        "title": "ESG & Sustainability",
+        "desc": "Ahli Environmental, Social, dan Governance (ESG) serta sustainability reporting",
+        "expertise": ["ESG Framework (GRI, SASB, TCFD)", "Sustainability Reporting", "Climate Risk Assessment"]
     }
 }
 
@@ -1040,6 +1047,7 @@ EXAMPLE_QUERIES = [
     {"query": "Bagaimana peran Komite Audit dalam risk assessment?", "agent": "Planning Expert"},
     {"query": "Apa perbedaan Komite Audit di perbankan dengan sektor lain?", "agent": "Banking Expert"},
     {"query": "Bagaimana format disclosure Komite Audit dalam annual report?", "agent": "Reporting Expert"},
+    {"query": "Bagaimana peran Komite Audit dalam mengawasi sustainability reporting dan ESG compliance?", "agent": "ESG Expert"},
 ]
 
 # Sidebar
