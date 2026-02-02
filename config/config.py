@@ -2,12 +2,15 @@
 Configuration Management for RAG Komite Audit System
 """
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import Optional
 import os
 from pathlib import Path
 
 class Settings(BaseSettings):
     """Application settings"""
+
+    model_config = ConfigDict(env_file=".env", case_sensitive=True)
 
     # Groq Configuration (for agent responses)
     GROQ_API_KEY: str
@@ -17,37 +20,33 @@ class Settings(BaseSettings):
     GLM_API_KEY: str = ""
     GLM_MODEL: str = "glm-4-plus"
     GLM_BASE_URL: str = "https://open.bigmodel.cn/api/paas/v4/"
-    
+
     # Supabase Configuration
     SUPABASE_URL: str
     SUPABASE_KEY: str
     SUPABASE_SERVICE_KEY: str
-    
+
     # Vector Store Configuration
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
     VECTOR_DIMENSION: int = 384
     CHUNK_SIZE: int = 500
     CHUNK_OVERLAP: int = 50
-    
+
     # Application Configuration
     APP_NAME: str = "RAG Komite Audit System"
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
-    
+
     # Agent Configuration
     MAX_AGENT_ITERATIONS: int = 3
     AGENT_TEMPERATURE: float = 0.7
     MAX_TOKENS: int = 2000
-    
+
     # Database Tables
     DOCUMENTS_TABLE: str = "komite_audit_documents"
     EMBEDDINGS_TABLE: str = "komite_audit_embeddings"
     CONVERSATIONS_TABLE: str = "komite_audit_conversations"
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
 
 # Initialize settings
 settings = Settings()
@@ -124,6 +123,18 @@ AGENT_ROLES = {
             "Communication dengan stakeholders",
             "Transparency dan accountability"
         ]
+    },
+    "esg_expert": {
+        "name": "ESG & Sustainability Expert",
+        "description": "Expert dalam Environmental, Social, dan Governance (ESG) serta sustainability reporting",
+        "expertise": [
+            "ESG framework dan standar (GRI, SASB, TCFD)",
+            "Sustainability reporting dan disclosure",
+            "Climate risk assessment",
+            "Social responsibility dan stakeholder engagement",
+            "Corporate governance ESG integration",
+            "Regulasi ESG Indonesia (OJK POJK 51)"
+        ]
     }
 }
 
@@ -138,6 +149,7 @@ Expert agents yang tersedia:
 4. regulatory_expert - Untuk pertanyaan tentang regulasi (UU Pasar Modal, PSAK, SPAP)
 5. banking_expert - Untuk pertanyaan khusus Komite Audit di perbankan
 6. reporting_expert - Untuk pertanyaan tentang pelaporan dan disclosure
+7. esg_expert - Untuk pertanyaan tentang ESG (Environmental, Social, Governance) dan sustainability
 
 Analisis pertanyaan user dan tentukan expert agent yang paling sesuai. Jika pertanyaan kompleks dan memerlukan multiple experts, tentukan urutan prioritasnya.
 
