@@ -2,7 +2,7 @@
 LLM Client for RAG Komite Audit System
 Handles communication with Groq API (responses) and GLM/Zhipu AI (routing)
 """
-from groq import Groq
+from groq import AsyncGroq
 import httpx
 from typing import List, Dict, Optional
 import json
@@ -83,7 +83,7 @@ class LLMClient:
     """Client for interacting with Groq API"""
     
     def __init__(self):
-        self.client = Groq(api_key=settings.GROQ_API_KEY)
+        self.client = AsyncGroq(api_key=settings.GROQ_API_KEY)
         self.model = settings.GROQ_MODEL
         self.temperature = settings.AGENT_TEMPERATURE
         self.max_tokens = settings.MAX_TOKENS
@@ -100,7 +100,7 @@ class LLMClient:
         try:
             response_format = {"type": "json_object"} if json_mode else None
             
-            chat_completion = self.client.chat.completions.create(
+            chat_completion = await self.client.chat.completions.create(
                 messages=messages,
                 model=self.model,
                 temperature=temperature or self.temperature,
