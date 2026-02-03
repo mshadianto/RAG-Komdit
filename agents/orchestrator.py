@@ -162,7 +162,8 @@ class AgentOrchestrator:
         self,
         query: str,
         top_k: int = 5,
-        similarity_threshold: float = 0.7
+        similarity_threshold: float = 0.7,
+        filter_document_ids: List[str] = None
     ) -> Tuple[List[str], List[str], List[float]]:
         """
         Retrieve relevant context from vector store
@@ -171,12 +172,13 @@ class AgentOrchestrator:
         try:
             # Generate query embedding
             query_embedding = embedding_manager.generate_embedding(query)
-            
-            # Search similar chunks
+
+            # Search similar chunks (with optional document filter)
             results = await db.similarity_search(
                 query_embedding=query_embedding,
                 match_threshold=similarity_threshold,
-                match_count=top_k
+                match_count=top_k,
+                filter_document_ids=filter_document_ids
             )
             
             if not results:
@@ -204,26 +206,33 @@ class AgentOrchestrator:
         query: str,
         session_id: str,
         use_context: bool = True,
-        max_agents: int = 2
+        max_agents: int = 2,
+        filter_document_ids: List[str] = None
     ) -> Dict:
         """
         Process query through the multi-agent system
         Returns complete response with metadata
+
+        Args:
+            filter_document_ids: Optional list of document IDs to limit context search
         """
         start_time = time.time()
-        
+
         try:
             # Step 1: Route query
             logger.info(f"Processing query: {query[:100]}...")
             routing = await self.router.route(query)
-            
+
             # Step 2: Retrieve context if enabled
             contexts = []
             document_ids = []
             similarity_scores = []
-            
+
             if use_context:
-                contexts, document_ids, similarity_scores = await self.retrieve_context(query)
+                contexts, document_ids, similarity_scores = await self.retrieve_context(
+                    query,
+                    filter_document_ids=filter_document_ids
+                )
             
             # Step 3: Get conversation history
             conversation_history = await db.get_conversation_history(session_id, limit=5)

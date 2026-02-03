@@ -16,6 +16,7 @@ from config.config import settings, UPLOAD_DIR
 from agents.orchestrator import orchestrator
 from agents.financial_analyst import financial_analyst
 from agents.risk_audit_mapper import risk_audit_mapper
+from agents.executive_insight import executive_insight_analyzer
 from backend.document_processor import document_processor
 from backend.database import db
 
@@ -60,6 +61,16 @@ class RiskMappingRequest(BaseModel):
     audit_plan_document_id: str
     session_id: Optional[str] = None
     mapping_type: str = "comprehensive"  # comprehensive, quick, gap_only
+
+class ExecutiveInsightRequest(BaseModel):
+    document_id: str
+    session_id: Optional[str] = None
+    analysis_type: str = "full"  # full, quick, risk_focus
+
+class DocumentChatRequest(BaseModel):
+    document_id: str
+    query: str
+    session_id: str
 
 # Health check endpoint
 @app.get("/")
@@ -442,6 +453,144 @@ async def get_risk_mapping(mapping_id: str):
         if not mapping:
             raise HTTPException(status_code=404, detail="Risk mapping not found")
         return mapping
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Executive Insight endpoints
+@app.post("/executive-insight")
+async def create_executive_insight(request: ExecutiveInsightRequest):
+    """
+    Create executive insight analysis for an audit document
+    Extracts: Top 3 Critical Risks, Financial Exposure, Management Sentiment
+    """
+    try:
+        # Validate document exists and is processed
+        document = await db.get_document(request.document_id)
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        if document.get("status") != "processed":
+            raise HTTPException(
+                status_code=400,
+                detail="Document not yet processed. Please wait for processing to complete."
+            )
+
+        # Get full document text
+        document_text = await db.get_document_full_text(request.document_id)
+        if not document_text:
+            raise HTTPException(
+                status_code=404,
+                detail="Document text not found. Document may not have been processed correctly."
+            )
+
+        # Run executive insight analysis
+        insight_result, execution_time, tokens_used = await executive_insight_analyzer.analyze_document(
+            document_text=document_text,
+            document_metadata=document,
+            analysis_type=request.analysis_type
+        )
+
+        # Save to database
+        saved_insight = await db.create_executive_insight(
+            document_id=request.document_id,
+            session_id=request.session_id,
+            analysis_type=request.analysis_type,
+            insight_result=insight_result,
+            processing_time_ms=execution_time,
+            tokens_used=tokens_used
+        )
+
+        return {
+            "success": True,
+            "document_id": request.document_id,
+            "document_name": document.get("filename"),
+            "analysis_type": request.analysis_type,
+            "insight": insight_result,
+            "processing_time_ms": execution_time,
+            "tokens_used": tokens_used,
+            "insight_id": saved_insight.get("id") if saved_insight else None
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/executive-insights")
+async def list_executive_insights(
+    session_id: Optional[str] = None,
+    risk_rating: Optional[str] = None,
+    limit: int = 50
+):
+    """List all executive insights with optional filters"""
+    try:
+        insights = await db.list_executive_insights(session_id, risk_rating, limit)
+        return {"insights": insights}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/executive-insights/latest")
+async def get_latest_executive_insights(limit: int = 5):
+    """Get latest executive insights for dashboard display"""
+    try:
+        insights = await db.get_latest_executive_insights(limit)
+        return {"insights": insights}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/executive-insights/{insight_id}")
+async def get_executive_insight(insight_id: str):
+    """Get a specific executive insight by ID"""
+    try:
+        insight = await db.get_executive_insight(insight_id)
+        if not insight:
+            raise HTTPException(status_code=404, detail="Executive insight not found")
+        return insight
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/chat-document")
+async def chat_with_document(request: DocumentChatRequest):
+    """
+    Chat with a specific document using RAG
+    Filters context to only the specified document
+    """
+    try:
+        # Validate document exists and is processed
+        document = await db.get_document(request.document_id)
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        if document.get("status") != "processed":
+            raise HTTPException(
+                status_code=400,
+                detail="Document not yet processed."
+            )
+
+        # Process query through orchestrator with document filter
+        result = await orchestrator.process_query(
+            query=request.query,
+            session_id=request.session_id,
+            use_context=True,
+            max_agents=1,
+            filter_document_ids=[request.document_id]
+        )
+
+        return {
+            "success": result.get("success", False),
+            "document_id": request.document_id,
+            "document_name": document.get("filename"),
+            "query": request.query,
+            "response": result.get("response"),
+            "agents_used": result.get("agents_used", []),
+            "context_count": result.get("context_count", 0),
+            "processing_time_ms": result.get("processing_time_ms")
+        }
+
     except HTTPException:
         raise
     except Exception as e:

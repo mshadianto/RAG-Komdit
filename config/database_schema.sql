@@ -243,3 +243,45 @@ SELECT
 FROM risk_audit_mappings rm;
 
 COMMENT ON TABLE risk_audit_mappings IS 'Stores risk-to-audit mapping analysis results from Risk Audit Mapper';
+
+-- Executive Insights table - stores AI executive-level insight analysis results
+CREATE TABLE IF NOT EXISTS executive_insights (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id UUID REFERENCES komite_audit_documents(id) ON DELETE CASCADE,
+    session_id VARCHAR(100),
+    analysis_type VARCHAR(50) DEFAULT 'full',
+    insight_result JSONB NOT NULL,
+    overall_risk_rating VARCHAR(50),    -- LOW/MEDIUM/HIGH/CRITICAL
+    attention_required VARCHAR(50),      -- IMMEDIATE/HIGH/MODERATE/MONITOR
+    total_exposure_min NUMERIC,
+    total_exposure_max NUMERIC,
+    management_sentiment VARCHAR(50),    -- PROACTIVE/RESPONSIVE/NEUTRAL/DEFENSIVE/DISMISSIVE
+    sentiment_score INTEGER,             -- 1-10
+    processing_time_ms INTEGER,
+    tokens_used INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for executive_insights
+CREATE INDEX IF NOT EXISTS idx_exec_insights_document_id ON executive_insights(document_id);
+CREATE INDEX IF NOT EXISTS idx_exec_insights_session_id ON executive_insights(session_id);
+CREATE INDEX IF NOT EXISTS idx_exec_insights_created_at ON executive_insights(created_at);
+CREATE INDEX IF NOT EXISTS idx_exec_insights_risk_rating ON executive_insights(overall_risk_rating);
+CREATE INDEX IF NOT EXISTS idx_exec_insights_attention ON executive_insights(attention_required);
+CREATE INDEX IF NOT EXISTS idx_exec_insights_sentiment ON executive_insights(management_sentiment);
+
+-- View for executive insight statistics
+CREATE OR REPLACE VIEW executive_insight_statistics AS
+SELECT
+    d.category,
+    COUNT(DISTINCT ei.id) as total_insights,
+    COUNT(DISTINCT ei.document_id) as documents_analyzed,
+    AVG(ei.processing_time_ms) as avg_processing_time,
+    AVG(ei.sentiment_score) as avg_sentiment_score,
+    MODE() WITHIN GROUP (ORDER BY ei.overall_risk_rating) as most_common_risk_rating,
+    MODE() WITHIN GROUP (ORDER BY ei.management_sentiment) as most_common_sentiment
+FROM executive_insights ei
+JOIN komite_audit_documents d ON ei.document_id = d.id
+GROUP BY d.category;
+
+COMMENT ON TABLE executive_insights IS 'Stores executive-level insight analysis from AI CRO/CFO Advisor';

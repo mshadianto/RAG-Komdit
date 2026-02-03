@@ -151,21 +151,29 @@ class DatabaseManager:
         query_embedding: List[float],
         match_threshold: float = 0.7,
         match_count: int = 10,
-        filter_category: str = None
+        filter_category: str = None,
+        filter_document_ids: List[str] = None
     ) -> List[Dict]:
         """Perform similarity search using the database function"""
         try:
             # Convert embedding to the format expected by pgvector
             embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
-            
+
+            # Build RPC params
+            rpc_params = {
+                "query_embedding": embedding_str,
+                "match_threshold": match_threshold,
+                "match_count": match_count
+            }
+
+            # Add document filter if provided
+            if filter_document_ids:
+                rpc_params["filter_document_ids"] = filter_document_ids
+
             # Call the stored procedure
             response = self.client.rpc(
                 "search_komite_audit_embeddings",
-                {
-                    "query_embedding": embedding_str,
-                    "match_threshold": match_threshold,
-                    "match_count": match_count
-                }
+                rpc_params
             ).execute()
             
             results = response.data or []
@@ -454,6 +462,93 @@ class DatabaseManager:
             return response.data or []
         except Exception as e:
             logger.error(f"Error listing risk mappings: {str(e)}")
+            return []
+
+    # Executive Insight Methods
+    async def create_executive_insight(
+        self,
+        document_id: str,
+        session_id: Optional[str],
+        analysis_type: str,
+        insight_result: Dict,
+        processing_time_ms: int,
+        tokens_used: int = None
+    ) -> Optional[Dict]:
+        """Save executive insight analysis to database"""
+        try:
+            exec_summary = insight_result.get("executive_summary", {})
+            card_summary = insight_result.get("executive_card_summary", {})
+            exposure = insight_result.get("financial_exposure", {}).get("total_estimated_exposure", {})
+            sentiment = insight_result.get("management_response_sentiment", {})
+
+            data = {
+                "document_id": document_id,
+                "session_id": session_id,
+                "analysis_type": analysis_type,
+                "insight_result": insight_result,
+                "processing_time_ms": processing_time_ms,
+                "tokens_used": tokens_used,
+                "overall_risk_rating": exec_summary.get("overall_risk_rating"),
+                "attention_required": card_summary.get("attention_required"),
+                "total_exposure_min": exposure.get("min"),
+                "total_exposure_max": exposure.get("max"),
+                "management_sentiment": sentiment.get("overall_sentiment"),
+                "sentiment_score": sentiment.get("sentiment_score")
+            }
+
+            response = self.client.table("executive_insights").insert(data).execute()
+            logger.info(f"Executive insight saved for document: {document_id}")
+            return response.data[0] if response.data else None
+
+        except Exception as e:
+            logger.error(f"Error saving executive insight: {str(e)}")
+            return None
+
+    async def get_executive_insight(self, insight_id: str) -> Optional[Dict]:
+        """Get a specific executive insight by ID"""
+        try:
+            response = self.client.table("executive_insights")\
+                .select("*, komite_audit_documents(filename, category)")\
+                .eq("id", insight_id)\
+                .execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            logger.error(f"Error getting executive insight: {str(e)}")
+            return None
+
+    async def list_executive_insights(
+        self,
+        session_id: Optional[str] = None,
+        risk_rating: Optional[str] = None,
+        limit: int = 50
+    ) -> List[Dict]:
+        """List executive insights with optional filters"""
+        try:
+            query = self.client.table("executive_insights")\
+                .select("*, komite_audit_documents(filename, category)")
+
+            if session_id:
+                query = query.eq("session_id", session_id)
+            if risk_rating:
+                query = query.eq("overall_risk_rating", risk_rating)
+
+            response = query.order("created_at", desc=True).limit(limit).execute()
+            return response.data or []
+        except Exception as e:
+            logger.error(f"Error listing executive insights: {str(e)}")
+            return []
+
+    async def get_latest_executive_insights(self, limit: int = 5) -> List[Dict]:
+        """Get latest executive insights for dashboard display"""
+        try:
+            response = self.client.table("executive_insights")\
+                .select("*, komite_audit_documents(filename, category)")\
+                .order("created_at", desc=True)\
+                .limit(limit)\
+                .execute()
+            return response.data or []
+        except Exception as e:
+            logger.error(f"Error getting latest executive insights: {str(e)}")
             return []
 
 # Global database manager instance

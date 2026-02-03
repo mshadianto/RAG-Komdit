@@ -38,6 +38,12 @@ if 'prefilled_query' not in st.session_state:
 if 'last_risk_mapping' not in st.session_state:
     st.session_state.last_risk_mapping = None
 
+if 'last_executive_insight' not in st.session_state:
+    st.session_state.last_executive_insight = None
+
+if 'document_chat_history' not in st.session_state:
+    st.session_state.document_chat_history = {}
+
 # Midnight Vault Dark Theme CSS
 st.markdown("""
 <style>
@@ -955,6 +961,100 @@ st.markdown("""
         font-size: 0.85rem;
         color: #B0B0B0;
     }
+
+    /* Executive Insight Card */
+    .exec-card {
+        background: linear-gradient(135deg, rgba(30, 39, 50, 0.9) 0%, rgba(10, 15, 25, 0.95) 100%);
+        border: 1px solid rgba(0, 198, 255, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .exec-card:hover {
+        box-shadow: 0 8px 30px rgba(0, 198, 255, 0.2);
+        transform: translateY(-3px);
+    }
+
+    .exec-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .exec-card-risk-badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .risk-critical { background: rgba(255, 65, 65, 0.2); color: #FF4141; border: 1px solid #FF4141; }
+    .risk-high { background: rgba(255, 107, 53, 0.2); color: #FF6B35; border: 1px solid #FF6B35; }
+    .risk-medium { background: rgba(255, 170, 0, 0.2); color: #FFAA00; border: 1px solid #FFAA00; }
+    .risk-low { background: rgba(0, 255, 65, 0.2); color: #00FF41; border: 1px solid #00FF41; }
+    .risk-unknown { background: rgba(107, 114, 128, 0.2); color: #6B7280; border: 1px solid #6B7280; }
+
+    .exec-card-metric {
+        font-size: 1.75rem;
+        font-weight: 700;
+        background: linear-gradient(90deg, #00C6FF 0%, #0072FF 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 0.75rem 0;
+    }
+
+    .exec-card-sentiment {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 198, 255, 0.15);
+    }
+
+    .sentiment-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .sentiment-proactive { background: #00FF41; }
+    .sentiment-responsive { background: #00C6FF; }
+    .sentiment-neutral { background: #FFAA00; }
+    .sentiment-defensive { background: #FF6B35; }
+    .sentiment-dismissive { background: #FF4141; }
+    .sentiment-unknown { background: #6B7280; }
+
+    /* Risk Item Card */
+    .risk-item-card {
+        background: rgba(30, 39, 50, 0.6);
+        border: 1px solid rgba(0, 198, 255, 0.15);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .risk-item-card:hover {
+        border-color: rgba(0, 198, 255, 0.4);
+    }
+
+    .risk-rank-badge {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1220,8 +1320,74 @@ if selected == "Beranda":
 
     st.markdown("<br><br>", unsafe_allow_html=True)
 
+    # Executive Insights Section
+    st.markdown('<div class="section-title">Executive Insights Terbaru</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-subtitle">Ringkasan eksekutif dari analisis dokumen audit terbaru</div>', unsafe_allow_html=True)
+
+    latest_insights = call_api("executive-insights/latest", params={"limit": 3})
+
+    if latest_insights and latest_insights.get("insights") and len(latest_insights["insights"]) > 0:
+        exec_cols = st.columns(3)
+        for idx, insight in enumerate(latest_insights["insights"][:3]):
+            with exec_cols[idx]:
+                insight_result = insight.get("insight_result", {})
+                card_summary = insight_result.get("executive_card_summary", {})
+                exec_summary = insight_result.get("executive_summary", {})
+                sentiment_data = insight_result.get("management_response_sentiment", {})
+
+                risk_rating = insight.get("overall_risk_rating", "UNKNOWN")
+                risk_class = f"risk-{risk_rating.lower()}" if risk_rating else "risk-unknown"
+
+                sentiment = insight.get("management_sentiment", "UNKNOWN")
+                sentiment_class = f"sentiment-{sentiment.lower()}" if sentiment else "sentiment-unknown"
+
+                doc_info = insight.get("komite_audit_documents", {})
+                doc_name = doc_info.get("filename", "Unknown Document") if doc_info else "Unknown Document"
+                doc_name_short = doc_name[:35] + "..." if len(doc_name) > 35 else doc_name
+
+                headline = card_summary.get("headline", "Analisis Tersedia")
+                one_liner = card_summary.get("one_liner", "Klik untuk melihat detail")
+                key_number = card_summary.get("key_number", "N/A")
+
+                st.markdown(f"""
+                <div class="exec-card">
+                    <div class="exec-card-header">
+                        <span style="color: #6B7280; font-size: 0.75rem; max-width: 60%;">
+                            {doc_name_short}
+                        </span>
+                        <span class="exec-card-risk-badge {risk_class}">{risk_rating}</span>
+                    </div>
+                    <p style="color: #FFFFFF; font-weight: 600; font-size: 0.95rem; margin: 0.5rem 0; line-height: 1.3;">
+                        {headline}
+                    </p>
+                    <p style="color: #B0B0B0; font-size: 0.8rem; margin: 0.5rem 0; line-height: 1.4;">
+                        {one_liner}
+                    </p>
+                    <div class="exec-card-metric">
+                        {key_number}
+                    </div>
+                    <div class="exec-card-sentiment">
+                        <div class="sentiment-indicator {sentiment_class}"></div>
+                        <span style="color: #6B7280; font-size: 0.75rem;">
+                            Sentiment: {sentiment}
+                        </span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style="background: rgba(30, 39, 50, 0.5); border: 1px solid rgba(0, 198, 255, 0.15);
+                    border-radius: 12px; padding: 2rem; text-align: center;">
+            <p style="color: #6B7280; margin: 0;">
+                Belum ada executive insight. Analisis dokumen audit melalui halaman <b>Analisis</b> untuk memulai.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+
     # Expert Agents Section
-    st.markdown('<div class="section-title">6 Expert Agents</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">8 Expert Agents</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-subtitle">Tim AI ahli yang siap menjawab pertanyaan Anda</div>', unsafe_allow_html=True)
 
     # First row of agents
@@ -1512,6 +1678,56 @@ elif selected == "Dokumen":
                         if call_api(f"documents/{doc['id']}", method="DELETE"):
                             st.success("Dokumen berhasil dihapus")
                             st.rerun()
+
+                # Document Chat Section (for processed documents)
+                if doc['status'] == 'processed':
+                    st.markdown("---")
+                    st.markdown("**💬 Chat dengan Dokumen Ini**")
+
+                    chat_key = f"doc_chat_{doc['id']}"
+                    chat_query = st.text_input(
+                        "Tanyakan sesuatu tentang dokumen ini...",
+                        key=f"chat_input_{doc['id']}",
+                        placeholder="Contoh: Apa temuan utama dalam laporan ini?"
+                    )
+
+                    if st.button("Kirim", key=f"chat_btn_{doc['id']}"):
+                        if chat_query:
+                            with st.spinner("Mencari jawaban..."):
+                                chat_result = call_api(
+                                    "chat-document",
+                                    method="POST",
+                                    timeout=120,
+                                    json={
+                                        "document_id": doc['id'],
+                                        "query": chat_query,
+                                        "session_id": st.session_state.session_id
+                                    }
+                                )
+
+                                if chat_result and chat_result.get("success"):
+                                    # Store in session state
+                                    if doc['id'] not in st.session_state.document_chat_history:
+                                        st.session_state.document_chat_history[doc['id']] = []
+                                    st.session_state.document_chat_history[doc['id']].append({
+                                        "query": chat_query,
+                                        "response": chat_result.get("response", ""),
+                                        "agents": chat_result.get("agents_used", [])
+                                    })
+                                else:
+                                    st.error("Gagal mendapatkan jawaban. Silakan coba lagi.")
+
+                    # Display chat history for this document
+                    if doc['id'] in st.session_state.document_chat_history:
+                        for chat in reversed(st.session_state.document_chat_history[doc['id']][-3:]):
+                            st.markdown(f"""
+                            <div class="query-box">
+                                <strong>Q:</strong> {chat['query']}
+                            </div>
+                            <div class="response-box">
+                                <strong>A:</strong> {chat['response'][:500]}{'...' if len(chat['response']) > 500 else ''}
+                            </div>
+                            """, unsafe_allow_html=True)
     else:
         st.info("Belum ada dokumen. Unggah dokumen untuk memulai.")
 
@@ -1930,6 +2146,339 @@ elif selected == "Analisis":
                 """, unsafe_allow_html=True)
     else:
         st.info("Belum ada riwayat analisis.")
+
+    # =========================================
+    # EXECUTIVE INSIGHT SECTION
+    # =========================================
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown('<div class="main-header">Executive Insight Analyzer</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Ekstrak Top 3 Risks, Financial Exposure, dan Management Sentiment untuk dashboard eksekutif</div>', unsafe_allow_html=True)
+
+    # CRO/CFO Advisor Badge
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, rgba(30, 39, 50, 0.9) 0%, rgba(10, 15, 25, 0.95) 100%);
+                border: 1px solid rgba(0, 198, 255, 0.3);
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 60px; height: 60px;
+                        background: linear-gradient(135deg, #FF6B35 0%, #FF4141 100%);
+                        border-radius: 50%;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.5rem;">
+                🎯
+            </div>
+            <div>
+                <h3 style="color: #FF6B35; margin: 0; font-size: 1.2rem;">CRO & CFO Advisor</h3>
+                <p style="color: #B0B0B0; margin: 0.25rem 0 0 0; font-size: 0.9rem;">
+                    Executive Risk & Financial Insight Specialist
+                </p>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                    <span style="background: rgba(0, 198, 255, 0.15); border: 1px solid rgba(0, 198, 255, 0.3);
+                                 padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.7rem; color: #00C6FF;">
+                        CFA Charterholder
+                    </span>
+                    <span style="background: rgba(0, 255, 65, 0.15); border: 1px solid rgba(0, 255, 65, 0.3);
+                                 padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.7rem; color: #00FF41;">
+                        CPA / CERP
+                    </span>
+                    <span style="background: rgba(255, 170, 0, 0.15); border: 1px solid rgba(255, 170, 0, 0.3);
+                                 padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.7rem; color: #FFAA00;">
+                        20+ Years Experience
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Executive Insight Controls
+    st.markdown('<div class="section-header">Pilih Dokumen untuk Executive Insight</div>', unsafe_allow_html=True)
+
+    # Fetch processed documents for executive insight
+    exec_docs_data = call_api("documents", params={"status": "processed", "limit": 100})
+
+    if exec_docs_data and exec_docs_data.get("documents"):
+        exec_documents = exec_docs_data["documents"]
+        exec_doc_options = {f"{doc['filename']} ({doc.get('category', 'Uncategorized')})": doc['id'] for doc in exec_documents}
+
+        exec_col1, exec_col2 = st.columns([2, 1])
+        with exec_col1:
+            exec_selected_doc_label = st.selectbox(
+                "Pilih Dokumen untuk Executive Insight",
+                options=list(exec_doc_options.keys()),
+                label_visibility="collapsed",
+                key="exec_insight_doc_selector"
+            )
+        with exec_col2:
+            exec_analysis_type = st.selectbox(
+                "Jenis Analisis Insight",
+                options=["full", "quick", "risk_focus"],
+                format_func=lambda x: {
+                    "full": "📋 Full Insight",
+                    "quick": "⚡ Quick Summary",
+                    "risk_focus": "🎯 Risk Focus"
+                }.get(x, x),
+                label_visibility="collapsed",
+                key="exec_insight_type_selector"
+            )
+
+        exec_selected_doc_id = exec_doc_options.get(exec_selected_doc_label)
+
+        # Analyze button for Executive Insight
+        if st.button("🎯 Generate Executive Insight", type="primary", use_container_width=True, key="exec_insight_btn"):
+            with st.spinner("Generating executive insight... Ini mungkin memakan waktu beberapa menit."):
+                exec_result = call_api(
+                    "executive-insight",
+                    method="POST",
+                    timeout=300,
+                    json={
+                        "document_id": exec_selected_doc_id,
+                        "session_id": st.session_state.session_id,
+                        "analysis_type": exec_analysis_type
+                    }
+                )
+
+                if exec_result and exec_result.get("success"):
+                    st.session_state.last_executive_insight = exec_result
+                    st.success(f"Executive insight generated dalam {exec_result.get('processing_time_ms', 0)/1000:.1f} detik")
+                else:
+                    error_msg = exec_result.get('detail', 'Unknown error') if exec_result else 'Connection failed'
+                    st.error(f"Gagal generate executive insight: {error_msg}")
+
+        st.markdown("---")
+
+        # Display Executive Insight Results
+        if st.session_state.last_executive_insight:
+            insight = st.session_state.last_executive_insight.get('insight', {})
+
+            st.markdown('<div class="section-header">Executive Insight Results</div>', unsafe_allow_html=True)
+
+            # Create tabs for different sections
+            exec_tab1, exec_tab2, exec_tab3, exec_tab4 = st.tabs([
+                "📋 Summary", "🎯 Top 3 Risks", "💰 Financial Exposure", "😊 Sentiment Analysis"
+            ])
+
+            with exec_tab1:
+                exec_summary = insight.get('executive_summary', {})
+                card_summary = insight.get('executive_card_summary', {})
+
+                # Risk Rating and Attention Required badges
+                risk_rating = exec_summary.get('overall_risk_rating', 'UNKNOWN')
+                attention = card_summary.get('attention_required', 'MONITOR')
+
+                rating_colors = {
+                    'LOW': ('#00FF41', 'rgba(0, 255, 65, 0.15)'),
+                    'MEDIUM': ('#FFAA00', 'rgba(255, 170, 0, 0.15)'),
+                    'HIGH': ('#FF6B35', 'rgba(255, 107, 53, 0.15)'),
+                    'CRITICAL': ('#FF4141', 'rgba(255, 65, 65, 0.15)'),
+                    'UNKNOWN': ('#6B7280', 'rgba(107, 114, 128, 0.15)')
+                }
+                r_color, r_bg = rating_colors.get(risk_rating, rating_colors['UNKNOWN'])
+
+                attention_colors = {
+                    'MONITOR': ('#00FF41', 'rgba(0, 255, 65, 0.15)'),
+                    'MODERATE': ('#FFAA00', 'rgba(255, 170, 0, 0.15)'),
+                    'HIGH': ('#FF6B35', 'rgba(255, 107, 53, 0.15)'),
+                    'IMMEDIATE': ('#FF4141', 'rgba(255, 65, 65, 0.15)')
+                }
+                a_color, a_bg = attention_colors.get(attention, attention_colors['MONITOR'])
+
+                badge_col1, badge_col2 = st.columns(2)
+                with badge_col1:
+                    st.markdown(f"""
+                    <div style="background: {r_bg}; border: 1px solid {r_color};
+                                border-radius: 10px; padding: 1rem; text-align: center;">
+                        <p style="color: #6B7280; font-size: 0.75rem; margin: 0;">OVERALL RISK RATING</p>
+                        <p style="color: {r_color}; font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0 0;">{risk_rating}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with badge_col2:
+                    st.markdown(f"""
+                    <div style="background: {a_bg}; border: 1px solid {a_color};
+                                border-radius: 10px; padding: 1rem; text-align: center;">
+                        <p style="color: #6B7280; font-size: 0.75rem; margin: 0;">ATTENTION REQUIRED</p>
+                        <p style="color: {a_color}; font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0 0;">{attention}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # Executive Card Summary
+                st.markdown(f"""
+                <div style="background: rgba(0, 198, 255, 0.05);
+                            border: 1px solid rgba(0, 198, 255, 0.15);
+                            border-left: 4px solid #00C6FF;
+                            border-radius: 0 10px 10px 0;
+                            padding: 1.25rem;">
+                    <h4 style="color: #00C6FF; margin: 0 0 0.5rem 0;">{card_summary.get('headline', 'N/A')}</h4>
+                    <p style="color: #FFFFFF; margin: 0 0 0.5rem 0;">{card_summary.get('one_liner', 'N/A')}</p>
+                    <p style="color: #FFAA00; font-size: 1.5rem; font-weight: 700; margin: 0.5rem 0 0 0;">
+                        {card_summary.get('key_number', 'N/A')}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with exec_tab2:
+                top_risks = insight.get('top_3_risks', [])
+
+                if top_risks:
+                    for risk in top_risks:
+                        severity = risk.get('severity', 'UNKNOWN')
+                        sev_colors = {
+                            'LOW': '#00FF41', 'MEDIUM': '#FFAA00',
+                            'HIGH': '#FF6B35', 'CRITICAL': '#FF4141', 'UNKNOWN': '#6B7280'
+                        }
+                        sev_color = sev_colors.get(severity, '#6B7280')
+
+                        rank = risk.get('rank', '?')
+                        rank_bg = {'1': '#FF4141', '2': '#FF6B35', '3': '#FFAA00'}.get(str(rank), '#6B7280')
+
+                        st.markdown(f"""
+                        <div class="risk-item-card" style="border-left: 4px solid {sev_color};">
+                            <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                                <div class="risk-rank-badge" style="background: {rank_bg}; color: white;">
+                                    {rank}
+                                </div>
+                                <div style="flex: 1;">
+                                    <h4 style="color: #FFFFFF; margin: 0 0 0.5rem 0; font-size: 1rem;">
+                                        {risk.get('risk_title', 'Unknown Risk')}
+                                    </h4>
+                                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                                        <span style="background: rgba(107, 114, 128, 0.2); padding: 0.2rem 0.5rem;
+                                                     border-radius: 8px; font-size: 0.7rem; color: #B0B0B0;">
+                                            {risk.get('risk_category', 'N/A')}
+                                        </span>
+                                        <span style="background: rgba({sev_color[1:][:2]}, {sev_color[1:][2:4]}, {sev_color[1:][4:]}, 0.2);
+                                                     padding: 0.2rem 0.5rem; border-radius: 8px; font-size: 0.7rem; color: {sev_color};">
+                                            Severity: {severity}
+                                        </span>
+                                        <span style="background: rgba(0, 198, 255, 0.15); padding: 0.2rem 0.5rem;
+                                                     border-radius: 8px; font-size: 0.7rem; color: #00C6FF;">
+                                            Likelihood: {risk.get('likelihood', 'N/A')}
+                                        </span>
+                                    </div>
+                                    <p style="color: #B0B0B0; font-size: 0.85rem; margin: 0 0 0.5rem 0;">
+                                        {risk.get('description', 'No description')}
+                                    </p>
+                                    <p style="color: #6B7280; font-size: 0.8rem; margin: 0;">
+                                        <strong>Impact:</strong> {risk.get('potential_impact', 'N/A')}
+                                    </p>
+                                    <p style="color: #00C6FF; font-size: 0.8rem; margin: 0.25rem 0 0 0;">
+                                        <strong>Recommended:</strong> {risk.get('recommended_action', 'N/A')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("Tidak ada data risiko teridentifikasi.")
+
+            with exec_tab3:
+                exposure = insight.get('financial_exposure', {})
+                total_exposure = exposure.get('total_estimated_exposure', {})
+
+                exp_min = total_exposure.get('min')
+                exp_max = total_exposure.get('max')
+                exp_currency = total_exposure.get('currency', 'IDR')
+                exp_confidence = total_exposure.get('confidence', 'LOW')
+
+                if exp_min is not None or exp_max is not None:
+                    exp_text = f"{exp_currency} {exp_min:,.0f} - {exp_max:,.0f}" if exp_min and exp_max else "Tidak dapat diestimasi"
+                else:
+                    exp_text = "Tidak dapat diestimasi dari dokumen"
+
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 65, 65, 0.05) 100%);
+                            border: 1px solid rgba(255, 107, 53, 0.3);
+                            border-radius: 12px; padding: 1.5rem; text-align: center; margin-bottom: 1rem;">
+                    <p style="color: #6B7280; font-size: 0.8rem; margin: 0;">TOTAL ESTIMATED EXPOSURE</p>
+                    <p style="color: #FF6B35; font-size: 1.75rem; font-weight: 700; margin: 0.5rem 0;">{exp_text}</p>
+                    <p style="color: #6B7280; font-size: 0.75rem; margin: 0;">Confidence: {exp_confidence}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                breakdown = exposure.get('exposure_breakdown', [])
+                if breakdown:
+                    st.markdown("**Exposure Breakdown:**")
+                    for item in breakdown:
+                        mat_color = {'MATERIAL': '#FF4141', 'SIGNIFICANT': '#FF6B35', 'MODERATE': '#FFAA00', 'MINOR': '#00FF41'}.get(item.get('materiality', ''), '#6B7280')
+                        st.markdown(f"""
+                        - **{item.get('category', 'N/A')}**: {item.get('amount_range', 'N/A')}
+                          <span style="color: {mat_color}; font-size: 0.8rem;">({item.get('materiality', 'N/A')})</span>
+                        """, unsafe_allow_html=True)
+
+                notes = exposure.get('exposure_notes', '')
+                if notes:
+                    st.markdown(f"**Notes:** {notes}")
+
+            with exec_tab4:
+                sentiment = insight.get('management_response_sentiment', {})
+                overall_sentiment = sentiment.get('overall_sentiment', 'UNKNOWN')
+                sentiment_score = sentiment.get('sentiment_score', 5)
+
+                sent_colors = {
+                    'PROACTIVE': '#00FF41', 'RESPONSIVE': '#00C6FF', 'NEUTRAL': '#FFAA00',
+                    'DEFENSIVE': '#FF6B35', 'DISMISSIVE': '#FF4141', 'UNKNOWN': '#6B7280'
+                }
+                sent_color = sent_colors.get(overall_sentiment, '#6B7280')
+
+                st.markdown(f"""
+                <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="background: linear-gradient(135deg, rgba(30, 39, 50, 0.9) 0%, rgba(10, 15, 25, 0.95) 100%);
+                                border: 2px solid {sent_color};
+                                border-radius: 12px; padding: 1.5rem; text-align: center; min-width: 150px;">
+                        <p style="color: #6B7280; font-size: 0.75rem; margin: 0;">OVERALL SENTIMENT</p>
+                        <p style="color: {sent_color}; font-size: 1.25rem; font-weight: 700; margin: 0.5rem 0;">{overall_sentiment}</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(30, 39, 50, 0.9) 0%, rgba(10, 15, 25, 0.95) 100%);
+                                border: 1px solid rgba(0, 198, 255, 0.3);
+                                border-radius: 12px; padding: 1.5rem; text-align: center; min-width: 100px;">
+                        <p style="color: #6B7280; font-size: 0.75rem; margin: 0;">SCORE</p>
+                        <p style="color: #00C6FF; font-size: 2rem; font-weight: 700; margin: 0;">{sentiment_score}/10</p>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                indicators = sentiment.get('indicators', {})
+                if indicators:
+                    ind_col1, ind_col2 = st.columns(2)
+                    with ind_col1:
+                        st.markdown(f"**Acknowledgment:** {indicators.get('acknowledgment', 'N/A')}")
+                        st.markdown(f"**Ownership:** {indicators.get('ownership', 'N/A')}")
+                    with ind_col2:
+                        st.markdown(f"**Action Orientation:** {indicators.get('action_orientation', 'N/A')}")
+                        st.markdown(f"**Timeline Commitment:** {indicators.get('timeline_commitment', 'N/A')}")
+
+                analysis_text = sentiment.get('sentiment_analysis', '')
+                if analysis_text:
+                    st.markdown(f"""
+                    <div class="response-box" style="margin-top: 1rem;">
+                        <strong>Analysis:</strong><br>{analysis_text}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                quotes = sentiment.get('key_quotes', [])
+                if quotes:
+                    st.markdown("**Key Quotes:**")
+                    for quote in quotes:
+                        st.markdown(f"> _{quote}_")
+
+            # Download JSON
+            st.markdown("---")
+            import json as json_lib
+            exec_insight_json = json_lib.dumps(insight, indent=2, ensure_ascii=False)
+            st.download_button(
+                label="📥 Download Executive Insight (JSON)",
+                data=exec_insight_json,
+                file_name=f"executive_insight_{st.session_state.last_executive_insight.get('document_name', 'document')}.json",
+                mime="application/json",
+                key="download_exec_insight"
+            )
+
+    else:
+        st.info("Belum ada dokumen yang diproses. Unggah dokumen terlebih dahulu di halaman Dokumen.")
 
 elif selected == "Risk Mapping":
     st.markdown('<div class="main-header">Risk-Audit Mapping</div>', unsafe_allow_html=True)
