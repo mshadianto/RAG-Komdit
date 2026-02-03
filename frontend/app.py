@@ -35,6 +35,9 @@ if 'conversation_history' not in st.session_state:
 if 'prefilled_query' not in st.session_state:
     st.session_state.prefilled_query = ""
 
+if 'last_risk_mapping' not in st.session_state:
+    st.session_state.last_risk_mapping = None
+
 # Midnight Vault Dark Theme CSS
 st.markdown("""
 <style>
@@ -1037,6 +1040,13 @@ AGENT_INFO = {
         "title": "ESG & Sustainability",
         "desc": "Ahli Environmental, Social, dan Governance (ESG) serta sustainability reporting",
         "expertise": ["ESG Framework (GRI, SASB, TCFD)", "Sustainability Reporting", "Climate Risk Assessment"]
+    },
+    "risk_mapping_expert": {
+        "icon": "🎯",
+        "name": "Risk Mapping Expert",
+        "title": "Risk-Audit Mapping",
+        "desc": "Ahli pemetaan risiko terhadap program audit (PKPT), gap analysis, dan coverage matrix",
+        "expertise": ["Risk-Based Audit Planning", "Gap Analysis", "Coverage Matrix"]
     }
 }
 
@@ -1048,6 +1058,7 @@ EXAMPLE_QUERIES = [
     {"query": "Apa perbedaan Komite Audit di perbankan dengan sektor lain?", "agent": "Banking Expert"},
     {"query": "Bagaimana format disclosure Komite Audit dalam annual report?", "agent": "Reporting Expert"},
     {"query": "Bagaimana peran Komite Audit dalam mengawasi sustainability reporting dan ESG compliance?", "agent": "ESG Expert"},
+    {"query": "Bagaimana cara memetakan risk register terhadap PKPT untuk memastikan semua risiko kritikal tercakup audit?", "agent": "Risk Mapping Expert"},
 ]
 
 # Sidebar
@@ -1068,8 +1079,8 @@ with st.sidebar:
     # Navigation Menu - Dark Theme
     selected = option_menu(
         menu_title=None,
-        options=["Beranda", "Konsultasi", "Dokumen", "Analisis", "Analitik", "Tentang"],
-        icons=["house-door", "chat-left-text", "folder2-open", "file-earmark-bar-graph", "graph-up-arrow", "info-circle"],
+        options=["Beranda", "Konsultasi", "Dokumen", "Analisis", "Risk Mapping", "Analitik", "Tentang"],
+        icons=["house-door", "chat-left-text", "folder2-open", "file-earmark-bar-graph", "bullseye", "graph-up-arrow", "info-circle"],
         menu_icon="cast",
         default_index=0,
         styles={
@@ -1919,6 +1930,572 @@ elif selected == "Analisis":
                 """, unsafe_allow_html=True)
     else:
         st.info("Belum ada riwayat analisis.")
+
+elif selected == "Risk Mapping":
+    st.markdown('<div class="main-header">Risk-Audit Mapping</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Pemetaan risiko terhadap program audit (PKPT) untuk identifikasi gap strategis</div>', unsafe_allow_html=True)
+
+    # Expert Badge
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, rgba(30, 39, 50, 0.9) 0%, rgba(10, 15, 25, 0.95) 100%);
+                border: 1px solid rgba(0, 198, 255, 0.3);
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 60px; height: 60px;
+                        background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
+                        border-radius: 50%;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.5rem;">
+                🎯
+            </div>
+            <div>
+                <h3 style="color: #00C6FF; margin: 0; font-size: 1.2rem;">Risk & Audit Strategy Consultant</h3>
+                <p style="color: #B0B0B0; margin: 0.25rem 0 0 0; font-size: 0.9rem;">
+                    Expert Risk-Based Audit Planning & Gap Analysis
+                </p>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                    <span style="background: rgba(0, 198, 255, 0.15); border: 1px solid rgba(0, 198, 255, 0.3);
+                                 padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.7rem; color: #00C6FF;">
+                        CIA Certified
+                    </span>
+                    <span style="background: rgba(0, 255, 65, 0.15); border: 1px solid rgba(0, 255, 65, 0.3);
+                                 padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.7rem; color: #00FF41;">
+                        CRMA
+                    </span>
+                    <span style="background: rgba(255, 170, 0, 0.15); border: 1px solid rgba(255, 170, 0, 0.3);
+                                 padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.7rem; color: #FFAA00;">
+                        COSO ERM & ISO 31000
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Document Selection
+    st.markdown("#### Pilih Dokumen untuk Dipetakan")
+
+    documents_data = call_api("documents", params={"status": "processed", "limit": 100})
+
+    if documents_data and documents_data.get("documents"):
+        documents = documents_data["documents"]
+        doc_options = {f"{doc['filename']} ({doc.get('category', 'Uncategorized')})": doc['id']
+                      for doc in documents}
+        doc_labels = list(doc_options.keys())
+
+        if len(doc_labels) < 2:
+            st.warning("Diperlukan minimal 2 dokumen yang sudah diproses. Unggah dokumen tambahan di halaman Dokumen.")
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("**Risk Register**")
+                risk_doc_label = st.selectbox(
+                    "Pilih Risk Register",
+                    options=doc_labels,
+                    key="risk_register_selector",
+                    label_visibility="collapsed"
+                )
+            with col2:
+                st.markdown("**PKPT / Audit Plan**")
+                # Default to second document to avoid same selection
+                default_audit_idx = min(1, len(doc_labels) - 1)
+                audit_doc_label = st.selectbox(
+                    "Pilih PKPT / Audit Plan",
+                    options=doc_labels,
+                    index=default_audit_idx,
+                    key="audit_plan_selector",
+                    label_visibility="collapsed"
+                )
+
+            risk_doc_id = doc_options.get(risk_doc_label)
+            audit_doc_id = doc_options.get(audit_doc_label)
+
+            # Mapping type selector
+            mapping_type = st.selectbox(
+                "Jenis Pemetaan",
+                options=["comprehensive", "quick", "gap_only"],
+                format_func=lambda x: {
+                    "comprehensive": "Komprehensif (Full Mapping)",
+                    "quick": "Cepat (High Risk Only)",
+                    "gap_only": "Gap Analysis Saja"
+                }.get(x, x)
+            )
+
+            # Validation: different documents
+            if risk_doc_id == audit_doc_id:
+                st.warning("Pilih dua dokumen yang berbeda: satu Risk Register dan satu PKPT/Audit Plan.")
+
+            # Selected docs info
+            risk_doc = next((d for d in documents if d['id'] == risk_doc_id), None)
+            audit_doc = next((d for d in documents if d['id'] == audit_doc_id), None)
+
+            if risk_doc and audit_doc and risk_doc_id != audit_doc_id:
+                st.markdown(f"""
+                <div style="background: rgba(0, 198, 255, 0.05);
+                            border: 1px solid rgba(0, 198, 255, 0.15);
+                            border-radius: 8px;
+                            padding: 0.75rem 1rem;
+                            margin: 0.5rem 0 1rem 0;">
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                        <div>
+                            <span style="color: #6B7280; font-size: 0.75rem;">Risk Register:</span>
+                            <span style="color: #FF4141; font-weight: 600; margin-left: 0.5rem; font-size: 0.85rem;">
+                                {risk_doc['filename']}
+                            </span>
+                        </div>
+                        <div>
+                            <span style="color: #6B7280; font-size: 0.75rem;">Audit Plan:</span>
+                            <span style="color: #00FF41; font-weight: 600; margin-left: 0.5rem; font-size: 0.85rem;">
+                                {audit_doc['filename']}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # Map button
+            map_disabled = (risk_doc_id == audit_doc_id)
+            if st.button("Mulai Pemetaan Risiko", type="primary",
+                         use_container_width=True, disabled=map_disabled):
+                with st.spinner("Memetakan risiko terhadap program audit..."):
+                    result = call_api(
+                        "risk-mapping",
+                        method="POST",
+                        timeout=300,
+                        json={
+                            "risk_register_document_id": risk_doc_id,
+                            "audit_plan_document_id": audit_doc_id,
+                            "session_id": st.session_state.session_id,
+                            "mapping_type": mapping_type
+                        }
+                    )
+
+                    if result and result.get("success"):
+                        st.session_state.last_risk_mapping = result
+                        st.success(
+                            f"Pemetaan selesai dalam "
+                            f"{result.get('processing_time_ms', 0)/1000:.1f} detik"
+                        )
+                    else:
+                        st.error("Gagal melakukan pemetaan. Silakan coba lagi.")
+
+            st.markdown("---")
+
+            # Display Results
+            if st.session_state.last_risk_mapping:
+                mapping = st.session_state.last_risk_mapping.get('mapping', {})
+
+                st.markdown("#### Hasil Pemetaan")
+
+                tab1, tab2, tab3, tab4, tab5 = st.tabs([
+                    "Ringkasan",
+                    "Coverage Matrix",
+                    "Gap Analysis",
+                    "Rekomendasi",
+                    "Data Quality"
+                ])
+
+                # --- Tab 1: Ringkasan ---
+                with tab1:
+                    exec_summary = mapping.get('executive_summary', {})
+
+                    alignment = exec_summary.get('overall_alignment', 'UNKNOWN')
+                    alignment_colors = {
+                        'STRONG': ('#00FF41', 'rgba(0, 255, 65, 0.15)'),
+                        'MODERATE': ('#FFAA00', 'rgba(255, 170, 0, 0.15)'),
+                        'WEAK': ('#FF6B35', 'rgba(255, 107, 53, 0.15)'),
+                        'CRITICAL': ('#FF4141', 'rgba(255, 65, 65, 0.15)'),
+                        'UNKNOWN': ('#6B7280', 'rgba(107, 114, 128, 0.15)')
+                    }
+                    a_color, a_bg = alignment_colors.get(alignment, alignment_colors['UNKNOWN'])
+
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.markdown(f"""
+                        <div style="background: {a_bg}; border: 1px solid {a_color};
+                                    border-radius: 10px; padding: 1rem; text-align: center;">
+                            <p style="color: #6B7280; font-size: 0.7rem; margin: 0;">OVERALL ALIGNMENT</p>
+                            <p style="color: {a_color}; font-size: 1.3rem; font-weight: 700;
+                                      margin: 0.5rem 0 0 0;">{alignment}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col2:
+                        coverage = exec_summary.get('coverage_percentage', 'N/A')
+                        st.markdown(f"""
+                        <div style="background: rgba(30, 39, 50, 0.6);
+                                    border: 1px solid rgba(0, 198, 255, 0.15);
+                                    border-radius: 10px; padding: 1rem; text-align: center;">
+                            <p style="color: #6B7280; font-size: 0.7rem; margin: 0;">COVERAGE</p>
+                            <p style="color: #00C6FF; font-size: 1.3rem; font-weight: 700;
+                                      margin: 0.5rem 0 0 0;">{coverage}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col3:
+                        gaps = exec_summary.get('critical_gaps_count', 0)
+                        gap_color = '#FF4141' if gaps and gaps > 0 else '#00FF41'
+                        st.markdown(f"""
+                        <div style="background: rgba(30, 39, 50, 0.6);
+                                    border: 1px solid rgba(0, 198, 255, 0.15);
+                                    border-radius: 10px; padding: 1rem; text-align: center;">
+                            <p style="color: #6B7280; font-size: 0.7rem; margin: 0;">CRITICAL GAPS</p>
+                            <p style="color: {gap_color}; font-size: 1.3rem; font-weight: 700;
+                                      margin: 0.5rem 0 0 0;">{gaps}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        st.metric("Total Risiko Teridentifikasi",
+                                 exec_summary.get('total_risks_identified', 0))
+                    with c2:
+                        st.metric("Total Program Audit",
+                                 exec_summary.get('total_audit_programs', 0))
+
+                    st.markdown("**Overview**")
+                    st.markdown(f"""
+                    <div class="response-box">
+                        {exec_summary.get('overview', 'Tidak ada overview tersedia.')}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                # --- Tab 2: Coverage Matrix ---
+                with tab2:
+                    coverage_matrix = mapping.get('coverage_matrix', [])
+                    if coverage_matrix:
+                        for item in coverage_matrix:
+                            status = item.get('coverage_status', 'UNKNOWN')
+                            status_colors = {
+                                'FULLY_COVERED': ('#00FF41', 'rgba(0, 255, 65, 0.1)'),
+                                'PARTIALLY_COVERED': ('#FFAA00', 'rgba(255, 170, 0, 0.1)'),
+                                'NOT_COVERED': ('#FF4141', 'rgba(255, 65, 65, 0.1)')
+                            }
+                            s_color, s_bg = status_colors.get(status, ('#6B7280', 'rgba(107, 114, 128, 0.1)'))
+                            quality = item.get('coverage_quality', '')
+                            risk_level = item.get('risk_level', '')
+
+                            audit_names = item.get('mapped_audit_names', [])
+                            audit_display = ', '.join(audit_names) if audit_names else 'Tidak ada'
+
+                            st.markdown(f"""
+                            <div style="background: {s_bg};
+                                        border-left: 3px solid {s_color};
+                                        border-radius: 0 8px 8px 0;
+                                        padding: 1rem;
+                                        margin: 0.5rem 0;">
+                                <div style="display: flex; justify-content: space-between;
+                                            align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div>
+                                        <span style="color: #FFFFFF; font-weight: 600;">
+                                            {item.get('risk_id', '')} - {item.get('risk_name', '')}
+                                        </span>
+                                        <span style="color: #6B7280; font-size: 0.75rem;
+                                                     margin-left: 0.5rem;">
+                                            [Risk: {risk_level}]
+                                        </span>
+                                    </div>
+                                    <span style="background: {s_color}; color: white;
+                                                 padding: 0.2rem 0.5rem;
+                                                 border-radius: 4px; font-size: 0.7rem;">
+                                        {status.replace('_', ' ')}
+                                    </span>
+                                </div>
+                                <p style="color: #B0B0B0; margin: 0.5rem 0 0 0; font-size: 0.85rem;">
+                                    Audit: {audit_display}{f' ({quality})' if quality else ''}
+                                </p>
+                                <p style="color: #6B7280; margin: 0.25rem 0 0 0; font-size: 0.8rem;">
+                                    {item.get('coverage_notes', '')}
+                                </p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("Coverage matrix tidak tersedia.")
+
+                # --- Tab 3: Gap Analysis ---
+                with tab3:
+                    gap = mapping.get('gap_analysis', {})
+
+                    # Uncovered Risks
+                    st.markdown("**Risiko Tidak Tercakup**")
+                    uncovered = gap.get('uncovered_risks', [])
+                    if uncovered:
+                        for risk in uncovered:
+                            severity = risk.get('gap_severity', 'MEDIUM')
+                            sev_colors = {
+                                'CRITICAL': '#FF0000',
+                                'HIGH': '#FF4141',
+                                'MEDIUM': '#FF6B35',
+                                'LOW': '#FFAA00'
+                            }
+                            sev_color = sev_colors.get(severity, '#FF6B35')
+                            st.markdown(f"""
+                            <div style="background: rgba(255, 65, 65, 0.1);
+                                        border-left: 3px solid {sev_color};
+                                        border-radius: 0 8px 8px 0;
+                                        padding: 1rem; margin: 0.5rem 0;">
+                                <div style="display: flex; justify-content: space-between;
+                                            align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                    <span style="color: #FFFFFF; font-weight: 600;">
+                                        {risk.get('risk_id', '')} - {risk.get('risk_name', '')}
+                                    </span>
+                                    <span style="background: {sev_color}; color: white;
+                                                 padding: 0.2rem 0.5rem; border-radius: 4px;
+                                                 font-size: 0.7rem;">{severity}</span>
+                                </div>
+                                <p style="color: #B0B0B0; margin: 0.5rem 0;">
+                                    {risk.get('reason', '')}
+                                </p>
+                                <p style="color: #FF4141; font-size: 0.85rem;">
+                                    Dampak: {risk.get('potential_impact', '')}
+                                </p>
+                                <p style="color: #00C6FF; font-size: 0.85rem;">
+                                    Rekomendasi: {risk.get('recommended_audit_response', '')}
+                                </p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.success("Semua risiko tercakup dalam program audit!")
+
+                    st.markdown("---")
+
+                    # Partially Covered
+                    st.markdown("**Risiko Tercakup Sebagian**")
+                    partial = gap.get('partially_covered_risks', [])
+                    if partial:
+                        for risk in partial:
+                            st.markdown(f"""
+                            <div style="background: rgba(255, 170, 0, 0.1);
+                                        border-left: 3px solid #FFAA00;
+                                        border-radius: 0 8px 8px 0;
+                                        padding: 1rem; margin: 0.5rem 0;">
+                                <span style="color: #FFFFFF; font-weight: 600;">
+                                    {risk.get('risk_id', '')} - {risk.get('risk_name', '')}
+                                </span>
+                                <p style="color: #B0B0B0; margin: 0.5rem 0;">
+                                    Cakupan saat ini: {risk.get('current_coverage', '')}
+                                </p>
+                                <p style="color: #FFAA00; font-size: 0.85rem;">
+                                    Gap: {risk.get('coverage_gap', '')}
+                                </p>
+                                <p style="color: #00C6FF; font-size: 0.85rem;">
+                                    Rekomendasi: {risk.get('recommended_enhancement', '')}
+                                </p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("Tidak ada risiko yang tercakup sebagian.")
+
+                    st.markdown("---")
+
+                    # Over-audited areas
+                    st.markdown("**Area Over-Audited**")
+                    over = gap.get('over_audited_areas', [])
+                    if over:
+                        for area in over:
+                            st.markdown(f"""
+                            <div style="background: rgba(0, 114, 255, 0.1);
+                                        border-left: 3px solid #0072FF;
+                                        border-radius: 0 8px 8px 0;
+                                        padding: 0.75rem 1rem; margin: 0.25rem 0;">
+                                <span style="color: #FFFFFF; font-weight: 600;">
+                                    {area.get('area', '')}
+                                </span>
+                                <span style="color: #6B7280; font-size: 0.8rem; margin-left: 0.5rem;">
+                                    ({area.get('audit_count', 0)} audits)
+                                </span>
+                                <p style="color: #B0B0B0; margin: 0.25rem 0 0 0; font-size: 0.85rem;">
+                                    {area.get('recommendation', '')}
+                                </p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("Tidak ada area yang over-audited.")
+
+                # --- Tab 4: Rekomendasi ---
+                with tab4:
+                    recs = mapping.get('recommendations', {})
+
+                    # Immediate Actions
+                    st.markdown("**Tindakan Prioritas**")
+                    immediate = recs.get('immediate_actions', [])
+                    if immediate:
+                        for action in immediate:
+                            if isinstance(action, dict):
+                                priority = action.get('priority', '!')
+                                action_text = action.get('action', '')
+                                target = action.get('target_risk', '')
+                                resources = action.get('estimated_resources', 'TBD')
+                                rationale = action.get('rationale', '')
+                                st.markdown(f"""
+                                <div style="background: rgba(255, 65, 65, 0.1);
+                                            border-left: 3px solid #FF4141;
+                                            padding: 0.75rem 1rem;
+                                            border-radius: 0 8px 8px 0;
+                                            margin: 0.25rem 0;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="background: #FF4141; color: white;
+                                                     width: 24px; height: 24px; border-radius: 50%;
+                                                     display: inline-flex; align-items: center;
+                                                     justify-content: center; font-size: 0.75rem;
+                                                     font-weight: 700; flex-shrink: 0;">
+                                            {priority}
+                                        </span>
+                                        <span style="color: #E0E0E0; font-weight: 600;">
+                                            {action_text}
+                                        </span>
+                                    </div>
+                                    <p style="color: #6B7280; font-size: 0.8rem; margin: 0.25rem 0 0 2rem;">
+                                        Target: {target} | Resource: {resources} | {rationale}
+                                    </p>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                st.markdown(f"- {action}")
+                    else:
+                        st.info("Tidak ada tindakan prioritas.")
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    # PKPT Adjustments
+                    st.markdown("**Penyesuaian PKPT**")
+                    pkpt_adj = recs.get('pkpt_adjustments', [])
+                    if pkpt_adj:
+                        for adj in pkpt_adj:
+                            st.markdown(f"- {adj}")
+                    else:
+                        st.info("Tidak ada penyesuaian PKPT yang diperlukan.")
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    # Resource Optimization
+                    st.markdown("**Optimasi Sumber Daya**")
+                    resources = recs.get('resource_optimization', [])
+                    if resources:
+                        for res in resources:
+                            st.markdown(f"- {res}")
+                    else:
+                        st.info("Tidak ada rekomendasi optimasi.")
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    # For Audit Committee
+                    st.markdown("**Rekomendasi untuk Komite Audit**")
+                    audit_recs = recs.get('for_audit_committee', [])
+                    if audit_recs:
+                        st.markdown("""
+                        <div style="background: rgba(0, 114, 255, 0.1);
+                                    border: 1px solid rgba(0, 114, 255, 0.3);
+                                    border-radius: 10px; padding: 1rem;">
+                        """, unsafe_allow_html=True)
+                        for rec in audit_recs:
+                            st.markdown(f"- {rec}")
+                        st.markdown("</div>", unsafe_allow_html=True)
+                    else:
+                        st.info("Tidak ada rekomendasi khusus untuk Komite Audit.")
+
+                # --- Tab 5: Data Quality ---
+                with tab5:
+                    dq = mapping.get('data_quality_notes', {})
+                    comp_colors = {'HIGH': '#00FF41', 'MEDIUM': '#FFAA00', 'LOW': '#FF4141'}
+
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        rr_comp = dq.get('risk_register_completeness', 'UNKNOWN')
+                        rr_color = comp_colors.get(rr_comp, '#6B7280')
+                        st.markdown(f"""
+                        <div style="background: rgba(30, 39, 50, 0.6); border: 1px solid rgba(0, 198, 255, 0.15);
+                                    border-radius: 10px; padding: 1rem; text-align: center;">
+                            <p style="color: #6B7280; font-size: 0.7rem; margin: 0;">RISK REGISTER</p>
+                            <p style="color: {rr_color}; font-size: 1.2rem;
+                                      font-weight: 700; margin: 0.5rem 0 0 0;">{rr_comp}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col2:
+                        ap_comp = dq.get('audit_plan_completeness', 'UNKNOWN')
+                        ap_color = comp_colors.get(ap_comp, '#6B7280')
+                        st.markdown(f"""
+                        <div style="background: rgba(30, 39, 50, 0.6); border: 1px solid rgba(0, 198, 255, 0.15);
+                                    border-radius: 10px; padding: 1rem; text-align: center;">
+                            <p style="color: #6B7280; font-size: 0.7rem; margin: 0;">AUDIT PLAN</p>
+                            <p style="color: {ap_color}; font-size: 1.2rem;
+                                      font-weight: 700; margin: 0.5rem 0 0 0;">{ap_comp}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col3:
+                        m_conf = dq.get('mapping_confidence', 'UNKNOWN')
+                        m_color = comp_colors.get(m_conf, '#6B7280')
+                        st.markdown(f"""
+                        <div style="background: rgba(30, 39, 50, 0.6); border: 1px solid rgba(0, 198, 255, 0.15);
+                                    border-radius: 10px; padding: 1rem; text-align: center;">
+                            <p style="color: #6B7280; font-size: 0.7rem; margin: 0;">MAPPING CONFIDENCE</p>
+                            <p style="color: {m_color}; font-size: 1.2rem;
+                                      font-weight: 700; margin: 0.5rem 0 0 0;">{m_conf}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    issues = dq.get('issues', [])
+                    if issues:
+                        st.markdown("**Catatan:**")
+                        for issue in issues:
+                            st.markdown(f"- {issue}")
+
+                    assumptions = dq.get('assumptions', [])
+                    if assumptions:
+                        st.markdown("**Asumsi:**")
+                        for assumption in assumptions:
+                            st.markdown(f"- {assumption}")
+
+                # Download JSON button
+                st.markdown("---")
+                import json as json_lib
+                mapping_json = json_lib.dumps(mapping, indent=2, ensure_ascii=False)
+                risk_name = st.session_state.last_risk_mapping.get('risk_register_name', 'risk')
+                audit_name = st.session_state.last_risk_mapping.get('audit_plan_name', 'audit')
+                st.download_button(
+                    label="Download Hasil Pemetaan (JSON)",
+                    data=mapping_json,
+                    file_name=f"risk_mapping_{risk_name}_vs_{audit_name}.json",
+                    mime="application/json"
+                )
+
+    else:
+        st.info("Belum ada dokumen yang diproses. Unggah dokumen terlebih dahulu di halaman Dokumen.")
+
+    # Mapping History
+    st.markdown("---")
+    st.markdown("#### Riwayat Pemetaan")
+
+    history_data = call_api("risk-mappings", params={"limit": 10})
+    if history_data and history_data.get("mappings"):
+        for mapping_item in history_data["mappings"]:
+            risk_info = mapping_item.get('risk_doc', {}) or {}
+            audit_info = mapping_item.get('audit_doc', {}) or {}
+            alignment = mapping_item.get('overall_alignment', 'UNKNOWN')
+            alignment_colors_hist = {
+                'STRONG': '#00FF41', 'MODERATE': '#FFAA00',
+                'WEAK': '#FF6B35', 'CRITICAL': '#FF4141', 'UNKNOWN': '#6B7280'
+            }
+            al_color = alignment_colors_hist.get(alignment, '#6B7280')
+
+            with st.expander(
+                f"{risk_info.get('filename', 'Unknown')} vs "
+                f"{audit_info.get('filename', 'Unknown')} - "
+                f"{mapping_item.get('mapping_type', '')}"
+            ):
+                st.markdown(f"""
+                **Alignment:** <span style="color: {al_color};">{alignment}</span><br>
+                **Coverage:** {mapping_item.get('coverage_percentage', 'N/A')}<br>
+                **Critical Gaps:** {mapping_item.get('critical_gaps_count', 0)}<br>
+                **Waktu Proses:** {mapping_item.get('processing_time_ms', 0)/1000:.1f}s<br>
+                **Tanggal:** {mapping_item.get('created_at', '')[:10]}
+                """, unsafe_allow_html=True)
+    else:
+        st.info("Belum ada riwayat pemetaan.")
 
 elif selected == "Analitik":
     st.markdown('<div class="main-header">Dashboard Analitik</div>', unsafe_allow_html=True)

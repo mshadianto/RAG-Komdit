@@ -15,6 +15,7 @@ from pathlib import Path
 from config.config import settings, UPLOAD_DIR
 from agents.orchestrator import orchestrator
 from agents.financial_analyst import financial_analyst
+from agents.risk_audit_mapper import risk_audit_mapper
 from backend.document_processor import document_processor
 from backend.database import db
 
@@ -53,6 +54,12 @@ class AnalysisRequest(BaseModel):
     document_id: str
     session_id: Optional[str] = None
     analysis_type: str = "comprehensive"  # comprehensive, quick, ratio_only
+
+class RiskMappingRequest(BaseModel):
+    risk_register_document_id: str
+    audit_plan_document_id: str
+    session_id: Optional[str] = None
+    mapping_type: str = "comprehensive"  # comprehensive, quick, gap_only
 
 # Health check endpoint
 @app.get("/")
@@ -335,6 +342,108 @@ async def get_analyses_by_document(document_id: str, limit: int = 10):
         analyses = await db.get_analyses_by_document(document_id, limit)
         return {"analyses": analyses}
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Risk-Audit Mapping endpoints
+@app.post("/risk-mapping")
+async def create_risk_mapping(request: RiskMappingRequest):
+    """
+    Map risk register against audit plan (PKPT) to identify coverage gaps
+    """
+    try:
+        # Validate risk register document
+        risk_doc = await db.get_document(request.risk_register_document_id)
+        if not risk_doc:
+            raise HTTPException(status_code=404, detail="Risk register document not found")
+        if risk_doc.get("status") != "processed":
+            raise HTTPException(
+                status_code=400,
+                detail="Risk register document not yet processed."
+            )
+
+        # Validate audit plan document
+        audit_doc = await db.get_document(request.audit_plan_document_id)
+        if not audit_doc:
+            raise HTTPException(status_code=404, detail="Audit plan document not found")
+        if audit_doc.get("status") != "processed":
+            raise HTTPException(
+                status_code=400,
+                detail="Audit plan document not yet processed."
+            )
+
+        # Get full text for both documents
+        risk_text = await db.get_document_full_text(request.risk_register_document_id)
+        if not risk_text:
+            raise HTTPException(
+                status_code=404,
+                detail="Risk register text not found."
+            )
+
+        audit_text = await db.get_document_full_text(request.audit_plan_document_id)
+        if not audit_text:
+            raise HTTPException(
+                status_code=404,
+                detail="Audit plan text not found."
+            )
+
+        # Run risk-audit mapping
+        mapping_result, execution_time, tokens_used = await risk_audit_mapper.analyze_mapping(
+            risk_register_text=risk_text,
+            audit_plan_text=audit_text,
+            risk_register_metadata=risk_doc,
+            audit_plan_metadata=audit_doc,
+            mapping_type=request.mapping_type
+        )
+
+        # Save to database
+        saved_mapping = await db.create_risk_mapping(
+            risk_register_document_id=request.risk_register_document_id,
+            audit_plan_document_id=request.audit_plan_document_id,
+            session_id=request.session_id,
+            mapping_type=request.mapping_type,
+            mapping_result=mapping_result,
+            processing_time_ms=execution_time,
+            tokens_used=tokens_used
+        )
+
+        return {
+            "success": True,
+            "risk_register_document_id": request.risk_register_document_id,
+            "risk_register_name": risk_doc.get("filename"),
+            "audit_plan_document_id": request.audit_plan_document_id,
+            "audit_plan_name": audit_doc.get("filename"),
+            "mapping_type": request.mapping_type,
+            "mapping": mapping_result,
+            "processing_time_ms": execution_time,
+            "tokens_used": tokens_used,
+            "mapping_id": saved_mapping.get("id") if saved_mapping else None
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/risk-mappings")
+async def list_risk_mappings(session_id: Optional[str] = None, limit: int = 50):
+    """List all risk-audit mappings with optional session filter"""
+    try:
+        mappings = await db.list_risk_mappings(session_id, limit)
+        return {"mappings": mappings}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/risk-mappings/{mapping_id}")
+async def get_risk_mapping(mapping_id: str):
+    """Get a specific risk-audit mapping by ID"""
+    try:
+        mapping = await db.get_risk_mapping(mapping_id)
+        if not mapping:
+            raise HTTPException(status_code=404, detail="Risk mapping not found")
+        return mapping
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

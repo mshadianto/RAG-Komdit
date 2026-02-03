@@ -383,5 +383,78 @@ class DatabaseManager:
             logger.error(f"Error listing analyses: {str(e)}")
             return []
 
+    # Risk-Audit Mapping Methods
+    async def create_risk_mapping(
+        self,
+        risk_register_document_id: str,
+        audit_plan_document_id: str,
+        session_id: Optional[str],
+        mapping_type: str,
+        mapping_result: Dict,
+        processing_time_ms: int,
+        tokens_used: int = None
+    ) -> Optional[Dict]:
+        """Save risk-audit mapping to database"""
+        try:
+            exec_summary = mapping_result.get("executive_summary", {})
+            data = {
+                "risk_register_document_id": risk_register_document_id,
+                "audit_plan_document_id": audit_plan_document_id,
+                "session_id": session_id,
+                "mapping_type": mapping_type,
+                "mapping_result": mapping_result,
+                "processing_time_ms": processing_time_ms,
+                "tokens_used": tokens_used,
+                "overall_alignment": exec_summary.get("overall_alignment"),
+                "coverage_percentage": str(exec_summary.get("coverage_percentage", "N/A")),
+                "critical_gaps_count": exec_summary.get("critical_gaps_count", 0)
+            }
+
+            response = self.client.table("risk_audit_mappings").insert(data).execute()
+            logger.info(
+                f"Risk mapping saved for documents: "
+                f"{risk_register_document_id} vs {audit_plan_document_id}"
+            )
+            return response.data[0] if response.data else None
+
+        except Exception as e:
+            logger.error(f"Error saving risk mapping: {str(e)}")
+            return None
+
+    async def get_risk_mapping(self, mapping_id: str) -> Optional[Dict]:
+        """Get a specific risk-audit mapping by ID"""
+        try:
+            response = self.client.table("risk_audit_mappings")\
+                .select("*")\
+                .eq("id", mapping_id)\
+                .execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            logger.error(f"Error getting risk mapping: {str(e)}")
+            return None
+
+    async def list_risk_mappings(
+        self,
+        session_id: Optional[str] = None,
+        limit: int = 50
+    ) -> List[Dict]:
+        """List all risk-audit mappings with optional session filter"""
+        try:
+            query = self.client.table("risk_audit_mappings")\
+                .select(
+                    "*, "
+                    "risk_doc:komite_audit_documents!risk_register_document_id(filename, category), "
+                    "audit_doc:komite_audit_documents!audit_plan_document_id(filename, category)"
+                )
+
+            if session_id:
+                query = query.eq("session_id", session_id)
+
+            response = query.order("created_at", desc=True).limit(limit).execute()
+            return response.data or []
+        except Exception as e:
+            logger.error(f"Error listing risk mappings: {str(e)}")
+            return []
+
 # Global database manager instance
 db = DatabaseManager()

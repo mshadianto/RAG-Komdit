@@ -207,3 +207,39 @@ JOIN komite_audit_documents d ON a.document_id = d.id
 GROUP BY d.category;
 
 COMMENT ON TABLE financial_analyses IS 'Stores financial analysis results from AI Senior Financial Analyst';
+
+-- Risk-Audit Mappings table - stores risk-to-audit coverage analysis
+CREATE TABLE IF NOT EXISTS risk_audit_mappings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    risk_register_document_id UUID REFERENCES komite_audit_documents(id) ON DELETE CASCADE,
+    audit_plan_document_id UUID REFERENCES komite_audit_documents(id) ON DELETE CASCADE,
+    session_id VARCHAR(100),
+    mapping_type VARCHAR(50) DEFAULT 'comprehensive',
+    mapping_result JSONB NOT NULL,
+    overall_alignment VARCHAR(50),     -- STRONG/MODERATE/WEAK/CRITICAL
+    coverage_percentage VARCHAR(10),   -- e.g. "72%"
+    critical_gaps_count INTEGER DEFAULT 0,
+    processing_time_ms INTEGER,
+    tokens_used INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for risk_audit_mappings
+CREATE INDEX IF NOT EXISTS idx_risk_mappings_risk_doc ON risk_audit_mappings(risk_register_document_id);
+CREATE INDEX IF NOT EXISTS idx_risk_mappings_audit_doc ON risk_audit_mappings(audit_plan_document_id);
+CREATE INDEX IF NOT EXISTS idx_risk_mappings_session ON risk_audit_mappings(session_id);
+CREATE INDEX IF NOT EXISTS idx_risk_mappings_created_at ON risk_audit_mappings(created_at);
+CREATE INDEX IF NOT EXISTS idx_risk_mappings_alignment ON risk_audit_mappings(overall_alignment);
+
+-- View for risk mapping statistics
+CREATE OR REPLACE VIEW risk_mapping_statistics AS
+SELECT
+    COUNT(DISTINCT rm.id) as total_mappings,
+    COUNT(DISTINCT rm.risk_register_document_id) as unique_risk_registers,
+    COUNT(DISTINCT rm.audit_plan_document_id) as unique_audit_plans,
+    AVG(rm.processing_time_ms) as avg_processing_time,
+    AVG(rm.critical_gaps_count) as avg_critical_gaps,
+    MODE() WITHIN GROUP (ORDER BY rm.overall_alignment) as most_common_alignment
+FROM risk_audit_mappings rm;
+
+COMMENT ON TABLE risk_audit_mappings IS 'Stores risk-to-audit mapping analysis results from Risk Audit Mapper';

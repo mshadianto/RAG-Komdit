@@ -15,15 +15,16 @@ Multi-Agent RAG System for Indonesian Audit Committee (Komite Audit) expertise. 
 python -m venv venv
 venv\Scripts\activate          # Windows
 source venv/bin/activate       # Linux/Mac
-pip install -r requirements.txt
-cp .env.example .env           # Then fill in API keys
+pip install -r dev-requirements.txt   # All deps (backend + frontend + tools)
+cp .env.example .env                  # Then fill in API keys
 ```
+Note: `requirements.txt` is for Docker/production. Use `dev-requirements.txt` for local development (includes Streamlit, Plotly, etc.).
 
 ### Run backend
 ```bash
 python -m backend.main
 ```
-Backend runs at http://localhost:8000. Embedding model downloads lazily on first query.
+Backend runs at http://localhost:8000. Embedding model downloads lazily on first query. Uses `python -m` to ensure correct module resolution without setting `PYTHONPATH`.
 
 ### Run frontend
 ```bash
@@ -62,6 +63,9 @@ python -c "from sentence_transformers import SentenceTransformer; SentenceTransf
 ### Financial Analyst (`agents/financial_analyst.py`)
 AI Senior Financial Analyst persona (CFA/CPA). Uses low temperature (0.3), max 4000 tokens, JSON mode. Analysis types: `comprehensive`, `quick`, `ratio_only`. Output: structured JSON with executive_summary, financial_ratios, risk_assessment, recommendations, data_quality_notes.
 
+### Risk-Audit Mapper (`agents/risk_audit_mapper.py`)
+Senior Risk & Audit Strategy Consultant persona (CIA/CRMA). Maps Risk Register against PKPT (audit plan) to identify coverage gaps. Uses low temperature (0.3), max 4000 tokens, JSON mode. Accepts TWO documents (risk register + audit plan, each truncated to 25k chars). Mapping types: `comprehensive`, `quick`, `gap_only`. Output: structured JSON with executive_summary, risk_register_summary, audit_plan_summary, coverage_matrix, gap_analysis, recommendations, data_quality_notes. Endpoints: `POST /risk-mapping`, `GET /risk-mappings`, `GET /risk-mappings/{mapping_id}`.
+
 ### Backend (`backend/`)
 - **main.py**: FastAPI app with CORS. Key endpoints: `/query`, `/upload`, `/analyze`, `/documents`, `/conversations/{session_id}`, `/feedback`, `/statistics/*`, `/agents`
 - **database.py**: Supabase client (uses `SUPABASE_SERVICE_KEY`). Batch embedding insertion (100/batch). Calls `search_komite_audit_embeddings()` stored procedure.
@@ -73,7 +77,7 @@ AI Senior Financial Analyst persona (CFA/CPA). Uses low temperature (0.3), max 4
 - **database_schema.sql**: PostgreSQL schema with pgvector. Run in Supabase SQL Editor to initialize.
 
 ### Frontend (`frontend/app.py`)
-Streamlit app with 6 pages (Beranda, Konsultasi, Dokumen, Analisis, Analitik, Tentang). Uses `streamlit-option-menu` and Midnight Vault dark theme. Session state: `session_id` (UUID), `conversation_history`.
+Streamlit app with 7 pages (Beranda, Konsultasi, Dokumen, Analisis, Risk Mapping, Analitik, Tentang). Uses `streamlit-option-menu` and Midnight Vault dark theme. Session state: `session_id` (UUID), `conversation_history`.
 
 ## Key Configuration
 
@@ -86,16 +90,28 @@ Environment variables in `.env` (copy from `.env.example`):
 - `API_BASE_URL`: Frontend API target, default `http://localhost:8000`
 - `ENVIRONMENT`: `development` (enables uvicorn reload) or `production`
 
+Note: `.env.example` shows `GROQ_MODEL=llama-3.1-70b-versatile` but the actual default in `config.py` is `llama-3.3-70b-versatile`.
+
+## Tuning Defaults
+
+These values are hardcoded in the orchestrator/agents and affect query behavior:
+- Similarity threshold: 0.7, top_k: 5 (in `orchestrator.retrieve_context()`)
+- Conversation history: last 5 messages per session
+- Embedding batch insert: 100 per batch
+- Financial analyst: temperature 0.3, max 4000 tokens, JSON mode
+- Risk-audit mapper: temperature 0.3, max 4000 tokens, JSON mode, 25k chars per doc
+- Agent responses: temperature from `settings.AGENT_TEMPERATURE` (0.7), max from `settings.MAX_TOKENS` (2000)
+
 ## Database (Supabase)
 
-Tables: `komite_audit_documents`, `komite_audit_embeddings` (384-dim vectors, HNSW index), `komite_audit_conversations`, `agent_logs`, `financial_analyses`
+Tables: `komite_audit_documents`, `komite_audit_embeddings` (384-dim vectors, HNSW index), `komite_audit_conversations`, `agent_logs`, `financial_analyses`, `risk_audit_mappings`
 
 Key stored procedure: `search_komite_audit_embeddings(query_embedding, match_threshold, match_count, filter_document_ids)`
 
-Views: `document_statistics`, `agent_performance`, `analysis_statistics`
+Views: `document_statistics`, `agent_performance`, `analysis_statistics`, `risk_mapping_statistics`
 
 ## Agent Keys
-`charter_expert`, `planning_expert`, `financial_review_expert`, `regulatory_expert`, `banking_expert`, `reporting_expert`, `esg_expert`
+`charter_expert`, `planning_expert`, `financial_review_expert`, `regulatory_expert`, `banking_expert`, `reporting_expert`, `esg_expert`, `risk_mapping_expert`
 
 ## Important Patterns
 
@@ -103,7 +119,7 @@ Views: `document_statistics`, `agent_performance`, `analysis_statistics`
 All database operations and LLM calls are async. Use `await` when calling:
 - `db.similarity_search()`, `db.create_conversation()`, `db.get_document()`, etc.
 - `llm_client.generate_completion()`, `llm_client.generate_with_context()`
-- `orchestrator.process_query()`, `financial_analyst.analyze_document()`
+- `orchestrator.process_query()`, `financial_analyst.analyze_document()`, `risk_audit_mapper.analyze_mapping()`
 
 ### Error Handling
 - LLM routing failures fall back to `charter_expert` as default agent
@@ -114,6 +130,7 @@ All database operations and LLM calls are async. Use `await` when calling:
 ```python
 from agents.orchestrator import orchestrator       # Main query entry point
 from agents.financial_analyst import financial_analyst  # Financial analysis
+from agents.risk_audit_mapper import risk_audit_mapper  # Risk-audit mapping
 from backend.llm_client import llm_client, glm_client  # LLM clients
 from backend.database import db                    # Database operations
 from backend.embeddings import embedding_manager   # Embeddings

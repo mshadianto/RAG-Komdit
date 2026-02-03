@@ -135,6 +135,19 @@ AGENT_ROLES = {
             "Corporate governance ESG integration",
             "Regulasi ESG Indonesia (OJK POJK 51)"
         ]
+    },
+    "risk_mapping_expert": {
+        "name": "Risk-Audit Mapping Expert",
+        "description": "Expert dalam pemetaan risiko terhadap program audit (PKPT), gap analysis, dan coverage matrix",
+        "expertise": [
+            "Risk-based audit planning",
+            "Pemetaan risk register terhadap PKPT",
+            "Gap analysis cakupan audit",
+            "Coverage matrix dan heat map risiko",
+            "Enterprise Risk Management (ERM)",
+            "Optimasi sumber daya audit",
+            "COSO ERM Framework dan ISO 31000"
+        ]
     }
 }
 
@@ -150,6 +163,7 @@ Expert agents yang tersedia:
 5. banking_expert - Untuk pertanyaan khusus Komite Audit di perbankan
 6. reporting_expert - Untuk pertanyaan tentang pelaporan dan disclosure
 7. esg_expert - Untuk pertanyaan tentang ESG (Environmental, Social, Governance) dan sustainability
+8. risk_mapping_expert - Untuk pertanyaan tentang pemetaan risiko terhadap audit plan (PKPT), gap analysis, coverage matrix, dan risk-based audit planning
 
 Analisis pertanyaan user dan tentukan expert agent yang paling sesuai. Jika pertanyaan kompleks dan memerlukan multiple experts, tentukan urutan prioritasnya.
 
