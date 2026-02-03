@@ -202,10 +202,16 @@ class RiskAuditMapper:
                 {"role": "user", "content": analysis_prompt}
             ]
 
+            max_tokens_map = {
+                "comprehensive": 4000,
+                "quick": 2000,
+                "gap_only": 2500
+            }
+
             response = await llm_client.generate_completion(
                 messages=messages,
                 temperature=0.3,
-                max_tokens=4000,
+                max_tokens=max_tokens_map.get(mapping_type, 4000),
                 json_mode=True
             )
 
@@ -237,7 +243,12 @@ class RiskAuditMapper:
     ) -> str:
         """Build the mapping analysis prompt with both document contexts"""
 
-        max_chars_per_doc = 25000
+        max_chars_map = {
+            "comprehensive": 12000,
+            "quick": 5000,
+            "gap_only": 7000
+        }
+        max_chars_per_doc = max_chars_map.get(mapping_type, 12000)
         if len(risk_register_text) > max_chars_per_doc:
             risk_register_text = risk_register_text[:max_chars_per_doc] + \
                 "\n\n[... dokumen terpotong karena keterbatasan panjang ...]"
