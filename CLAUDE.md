@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Multi-Agent RAG System for Indonesian Audit Committee (Komite Audit) expertise. Uses 7 specialized expert agents to answer questions about audit committee governance, planning, regulatory compliance, reporting, and ESG/sustainability. Includes AI Financial Analyst (CFA/CPA Senior Analyst persona) for automated financial document analysis. Built with FastAPI backend, Streamlit frontend, dual-LLM architecture (Groq for responses, GLM for routing), and Supabase vector store with pgvector.
+Multi-Agent RAG System for Indonesian Audit Committee (Komite Audit) expertise. Uses 8 specialized expert agents to answer questions about audit committee governance, planning, regulatory compliance, reporting, and ESG/sustainability. Includes AI Financial Analyst (CFA/CPA Senior Analyst persona) for automated financial document analysis, Risk-Audit Mapper for gap analysis, and Executive Insight Summarizer for board-level dashboards. Built with FastAPI backend, Streamlit frontend, dual-LLM architecture (Groq for responses, GLM for routing), and Supabase vector store with pgvector.
 
 **Language**: Indonesian (prompts, responses, and UI are in Bahasa Indonesia)
 
@@ -64,20 +64,26 @@ python -c "from sentence_transformers import SentenceTransformer; SentenceTransf
 AI Senior Financial Analyst persona (CFA/CPA). Uses low temperature (0.3), max 4000 tokens, JSON mode. Analysis types: `comprehensive`, `quick`, `ratio_only`. Output: structured JSON with executive_summary, financial_ratios, risk_assessment, recommendations, data_quality_notes.
 
 ### Risk-Audit Mapper (`agents/risk_audit_mapper.py`)
-Senior Risk & Audit Strategy Consultant persona (CIA/CRMA). Maps Risk Register against PKPT (audit plan) to identify coverage gaps. Uses low temperature (0.3), max 4000 tokens, JSON mode. Accepts TWO documents (risk register + audit plan, each truncated to 25k chars). Mapping types: `comprehensive`, `quick`, `gap_only`. Output: structured JSON with executive_summary, risk_register_summary, audit_plan_summary, coverage_matrix, gap_analysis, recommendations, data_quality_notes. Endpoints: `POST /risk-mapping`, `GET /risk-mappings`, `GET /risk-mappings/{mapping_id}`.
+Senior Risk & Audit Strategy Consultant persona (CIA/CRMA). Maps Risk Register against PKPT (audit plan) to identify coverage gaps. Uses low temperature (0.3), max 4000 tokens, JSON mode. Accepts TWO documents (risk register + audit plan, each truncated dynamically based on mapping_type). Mapping types: `comprehensive`, `quick`, `gap_only`. Output: structured JSON with executive_summary, risk_register_summary, audit_plan_summary, coverage_matrix, gap_analysis, recommendations, data_quality_notes. Endpoints: `POST /risk-mapping`, `GET /risk-mappings`, `GET /risk-mappings/{mapping_id}`.
+
+### Executive Insight Analyzer (`agents/executive_insight.py`)
+Senior CRO/CFO Advisor persona (CFA/CPA/CERP, 20+ years). Extracts executive-level insights for board dashboards. Uses low temperature (0.3), JSON mode. Analysis types: `full` (15k chars, 4000 tokens), `quick` (7k chars, 2000 tokens), `risk_focus` (10k chars, 2500 tokens). Output: structured JSON with executive_summary, top_3_risks (with severity/likelihood/mitigation_status), financial_exposure (min/max ranges), management_response_sentiment (score 1-10, indicators), executive_card_summary (headline, one_liner, key_number), data_quality_notes. Endpoints: `POST /executive-insight`, `GET /executive-insights`, `GET /executive-insights/latest`, `GET /executive-insights/{insight_id}`.
+
+### Document Chat (`POST /chat-document`)
+Chat with a specific document using filtered RAG context. Accepts `document_id`, `query`, `session_id`. Uses `filter_document_ids` parameter in similarity search to restrict context to the specified document only. Useful for Q&A within a single audit report.
 
 ### Backend (`backend/`)
-- **main.py**: FastAPI app with CORS. Key endpoints: `/query`, `/upload`, `/analyze`, `/documents`, `/conversations/{session_id}`, `/feedback`, `/statistics/*`, `/agents`
+- **main.py**: FastAPI app with CORS. Key endpoints: `/query`, `/upload`, `/analyze`, `/executive-insight`, `/chat-document`, `/risk-mapping`, `/documents`, `/conversations/{session_id}`, `/feedback`, `/statistics/*`, `/agents`
 - **database.py**: Supabase client (uses `SUPABASE_SERVICE_KEY`). Batch embedding insertion (100/batch). Calls `search_komite_audit_embeddings()` stored procedure.
 - **embeddings.py**: Sentence Transformers (all-MiniLM-L6-v2, 384 dims). Lazy loading via `@property` — model loads on first use, not at startup.
 - **document_processor.py**: Extracts text from PDF/DOCX/TXT/XLSX, auto-detects category, chunks text, generates embeddings. Background processing via FastAPI `BackgroundTasks`.
 
 ### Configuration (`config/`)
-- **config.py**: Pydantic settings from `.env`. Exports: `settings`, `AGENT_ROLES` (7 agents), `SYSTEM_PROMPTS` (router + synthesizer), `UPLOAD_DIR`/`PROCESSED_DIR` (auto-created under `config/data/`).
+- **config.py**: Pydantic settings from `.env`. Exports: `settings`, `AGENT_ROLES` (8 agents), `SYSTEM_PROMPTS` (router + synthesizer), `UPLOAD_DIR`/`PROCESSED_DIR` (auto-created under `config/data/`).
 - **database_schema.sql**: PostgreSQL schema with pgvector. Run in Supabase SQL Editor to initialize.
 
 ### Frontend (`frontend/app.py`)
-Streamlit app with 7 pages (Beranda, Konsultasi, Dokumen, Analisis, Risk Mapping, Analitik, Tentang). Uses `streamlit-option-menu` and Midnight Vault dark theme. Session state: `session_id` (UUID), `conversation_history`.
+Streamlit app with 7 pages (Beranda, Konsultasi, Dokumen, Analisis, Risk Mapping, Analitik, Tentang). Uses `streamlit-option-menu` and Midnight Vault dark theme. Session state: `session_id` (UUID), `conversation_history`, `last_executive_insight`, `document_chat_history`. Features: Executive Insight Cards on Beranda dashboard, Executive Insight Analyzer in Analisis page, Document Chat widget in Dokumen page.
 
 ## Key Configuration
 
@@ -99,16 +105,17 @@ These values are hardcoded in the orchestrator/agents and affect query behavior:
 - Conversation history: last 5 messages per session
 - Embedding batch insert: 100 per batch
 - Financial analyst: temperature 0.3, max 4000 tokens, JSON mode
-- Risk-audit mapper: temperature 0.3, max 4000 tokens, JSON mode, 25k chars per doc
+- Risk-audit mapper: temperature 0.3, dynamic max tokens (4000/2000/2500), JSON mode, dynamic chars per doc (12k/5k/7k)
+- Executive insight: temperature 0.3, dynamic max tokens (4000/2000/2500), JSON mode, dynamic chars (15k/7k/10k)
 - Agent responses: temperature from `settings.AGENT_TEMPERATURE` (0.7), max from `settings.MAX_TOKENS` (2000)
 
 ## Database (Supabase)
 
-Tables: `komite_audit_documents`, `komite_audit_embeddings` (384-dim vectors, HNSW index), `komite_audit_conversations`, `agent_logs`, `financial_analyses`, `risk_audit_mappings`
+Tables: `komite_audit_documents`, `komite_audit_embeddings` (384-dim vectors, HNSW index), `komite_audit_conversations`, `agent_logs`, `financial_analyses`, `risk_audit_mappings`, `executive_insights`
 
 Key stored procedure: `search_komite_audit_embeddings(query_embedding, match_threshold, match_count, filter_document_ids)`
 
-Views: `document_statistics`, `agent_performance`, `analysis_statistics`, `risk_mapping_statistics`
+Views: `document_statistics`, `agent_performance`, `analysis_statistics`, `risk_mapping_statistics`, `executive_insight_statistics`
 
 ## Agent Keys
 `charter_expert`, `planning_expert`, `financial_review_expert`, `regulatory_expert`, `banking_expert`, `reporting_expert`, `esg_expert`, `risk_mapping_expert`
@@ -119,7 +126,7 @@ Views: `document_statistics`, `agent_performance`, `analysis_statistics`, `risk_
 All database operations and LLM calls are async. Use `await` when calling:
 - `db.similarity_search()`, `db.create_conversation()`, `db.get_document()`, etc.
 - `llm_client.generate_completion()`, `llm_client.generate_with_context()`
-- `orchestrator.process_query()`, `financial_analyst.analyze_document()`, `risk_audit_mapper.analyze_mapping()`
+- `orchestrator.process_query()`, `financial_analyst.analyze_document()`, `risk_audit_mapper.analyze_mapping()`, `executive_insight_analyzer.analyze_document()`
 
 ### Error Handling
 - LLM routing failures fall back to `charter_expert` as default agent
@@ -131,6 +138,7 @@ All database operations and LLM calls are async. Use `await` when calling:
 from agents.orchestrator import orchestrator       # Main query entry point
 from agents.financial_analyst import financial_analyst  # Financial analysis
 from agents.risk_audit_mapper import risk_audit_mapper  # Risk-audit mapping
+from agents.executive_insight import executive_insight_analyzer  # Executive insights
 from backend.llm_client import llm_client, glm_client  # LLM clients
 from backend.database import db                    # Database operations
 from backend.embeddings import embedding_manager   # Embeddings
